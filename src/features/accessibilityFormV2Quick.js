@@ -1,0 +1,2668 @@
+/**
+ * Accessibility Survey Form V2 - Quick + Deep Approach
+ * Option A: Visual-first design with essential questions upfront
+ * and optional detailed categories that expand
+ * 
+ * Access Nature - Phase 2 Redesign
+ * Created: December 2025
+ */
+
+import { toast } from '../utils/toast.js';
+import { userService } from '../services/userService.js';
+import { getProfile } from '../config/mobilityProfiles.js';
+
+/**
+ * Translations for the quick accessibility form
+ */
+const formTranslations = {
+  en: {
+    // Header
+    formTitle: "Trail Accessibility",
+    formSubtitle: "Quick survey helps others know what to expect",
+    close: "Close",
+    
+    // Phase indicators
+    phase1: "Quick Assessment",
+    phase2: "Add Details",
+    skipToSave: "Skip to Save",
+    
+    // Main questions
+    overallAccessibility: "Overall Accessibility",
+    fullyAccessible: "Fully Accessible",
+    fullyAccessibleDesc: "Suitable for all mobility devices",
+    mostlyAccessible: "Mostly Accessible",
+    mostlyAccessibleDesc: "Minor challenges in some areas",
+    partiallyAccessible: "Partially Accessible",
+    partiallyAccessibleDesc: "Some sections may be difficult",
+    notAccessible: "Not Accessible",
+    notAccessibleDesc: "Major barriers present",
+    
+    // Surface
+    surfaceType: "Main Surface Type",
+    paved: "Paved",
+    gravel: "Gravel",
+    dirt: "Dirt/Earth",
+    boardwalk: "Boardwalk",
+    mixed: "Mixed",
+    
+    // Path width
+    pathWidth: "Path Width",
+    wide: "Wide (2m+)",
+    standard: "Standard (1-2m)",
+    narrow: "Narrow (<1m)",
+    
+    // Slope
+    steepestSlope: "Steepest Section",
+    flat: "Flat",
+    gentle: "Gentle",
+    moderate: "Moderate",
+    steep: "Steep",
+    
+    // Obstacles
+    obstacles: "Obstacles on Trail",
+    noObstacles: "None",
+    fewObstacles: "Few",
+    someObstacles: "Some",
+    manyObstacles: "Many",
+    
+    // Quick notes
+    quickNotes: "Quick Notes (Optional)",
+    notesPlaceholder: "Any important tips for visitors...",
+    
+    // Buttons
+    continueToDetails: "Continue to Details",
+    saveNow: "Save Now",
+    saving: "Saving...",
+    cancel: "Cancel",
+    goBack: "Go Back",
+    saveSurvey: "Save Survey",
+    
+    // Detailed sections
+    addMoreDetails: "Add More Details",
+    saveCompleteSurvey: "Save Complete Survey",
+    optional: "Optional",
+    
+    // Categories
+    mobilityDetails: "Mobility Details",
+    surfaceDetails: "Surface & Quality",
+    visualDetails: "Visual & Environment",
+    facilitiesDetails: "Facilities",
+    signageDetails: "Signage & Navigation",
+    
+    // Mobility section
+    wheelchairAccess: "Wheelchair Accessibility",
+    disabledParking: "Accessible Parking Available",
+    parkingSpaces: "Number of spaces",
+    handrails: "Handrails on Slopes",
+    handrailsBoth: "Both sides",
+    handrailsOne: "One side",
+    handrailsNone: "None",
+    handrailsNA: "Not needed",
+    
+    // Surface section
+    surfaceQuality: "Surface Quality",
+    excellent: "Excellent",
+    fair: "Fair",
+    poor: "Poor",
+    stepsOnTrail: "Steps on Trail",
+    noSteps: "None",
+    fewSteps: "Few (1-3)",
+    someSteps: "Some (4-10)",
+    manySteps: "Many (10+)",
+    
+    // Visual section
+    shadeCoverage: "Shade Coverage",
+    mostlyShaded: "Mostly Shaded",
+    partialShade: "Partial",
+    noShade: "No Shade",
+    trailLit: "Trail is lit at night",
+    visualAdaptations: "Visual Impairment Features",
+    raisedBorders: "Raised borders",
+    tactileSurfaces: "Tactile surfaces",
+    colorContrast: "Color contrast",
+    
+    // Facilities section
+    accessibleRestrooms: "Accessible Restrooms",
+    available: "Available",
+    notAvailable: "Not Available",
+    nearby: "Nearby",
+    waterFountains: "Water Fountains",
+    restAreas: "Rest Areas / Benches",
+    none: "None",
+    few: "Few",
+    many: "Many",
+    picnicAreas: "Accessible Picnic Areas",
+    viewpoint: "Accessible Viewpoint",
+    
+    // Signage section
+    signageQuality: "Signage Quality",
+    good: "Good",
+    availableSignage: "Available Signage",
+    routeMap: "Route map",
+    directionalSigns: "Directional signs",
+    distanceMarkers: "Distance markers",
+    accessibilityInfo: "Accessibility info",
+    simpleLanguage: "Simple language",
+    audioDescription: "Audio description",
+    
+    // Phase 1 fields
+    trailName: "Trail Name",
+    trailNamePlaceholder: "e.g., Riverside Nature Path",
+    location: "Location",
+    locationPlaceholder: "e.g., Central Park, NYC",
+    trailSurface: "Trail Surface (select all that apply)",
+    concrete: "Concrete",
+    stone: "Stone",
+    overallDifficulty: "Overall Difficulty",
+    easy: "Easy",
+    challenging: "Challenging",
+    routeType: "Route Type",
+    loop: "Loop",
+    returnsToStart: "Returns to start",
+    outAndBack: "Out & Back",
+    samePathBothWays: "Same path both ways",
+    withHelp: "With Help",
+    partial: "Partial",
+    
+    // Phase 2 fields
+    tapCategoryHint: "Tap a category to add more details. All fields are optional.",
+    parking: "Parking",
+    accessibleSpaces: "Accessible spaces",
+    restrooms: "Restrooms",
+    accessibleFacilities: "Accessible facilities",
+    waterAndSeating: "Water & Seating",
+    fountainsBenches: "Fountains, benches",
+    shade: "Shade",
+    coverageVisibility: "Coverage & visibility",
+    slopes: "Slopes",
+    slopeInfo: "Inclines & steps",
+    signage: "Signage",
+    navigation: "Navigation signs",
+    
+    // More Phase 2 fields
+    surfaceQualityCategory: "Surface Quality",
+    conditionSlopes: "Condition, slopes",
+    visualAccess: "Visual Access",
+    tactileContrast: "Tactile, contrast",
+    environment: "Environment",
+    shadeLighting: "Shade, lighting",
+    mapsDirections: "Maps, directions",
+    picnicAndViews: "Picnic & Views",
+    tablesViewpoints: "Tables, viewpoints",
+    additionalNotesLabel: "Additional Notes",
+    additionalNotesPlaceholder: "Any other accessibility information, tips, or warnings...",
+    trailLength: "Trail Length (km)",
+    trailLengthPlaceholder: "e.g., 2.5",
+    estimatedDuration: "Estimated Duration",
+    selectDuration: "Select...",
+    under30: "Under 30 min",
+    mins30to60: "30-60 min",
+    hours1to2: "1-2 hours",
+    hours2to4: "2-4 hours",
+    halfDay: "Half day",
+    fullDay: "Full day",
+    over4hours: "4+ hours",
+    
+    // Trip Types
+    tripType: "Trip Type",
+    beach: "Beach",
+    stream: "Stream",
+    park: "Park",
+    forest: "Forest",
+    urban: "Urban",
+    scenic: "Scenic",
+    
+    // Parking fields
+    accessibleParkingAvailable: "Accessible parking available",
+    noAccessibleParking: "No accessible parking",
+    numAccessibleSpaces: "Number of accessible spaces",
+    
+    // Restroom fields
+    accessibleRestroomsAvailable: "Accessible restrooms available",
+    noAccessibleRestrooms: "No accessible restrooms",
+    nearbyRestrooms: "Restrooms nearby (not on trail)",
+    
+    // Amenities fields
+    waterFountainsLabel: "Water Fountains",
+    accessibleWaterAvailable: "Accessible water fountain",
+    noWaterFountain: "No water fountain",
+    seatingBenches: "Seating / Benches",
+    frequentSeating: "Frequent seating",
+    someSeating: "Some seating",
+    limitedSeating: "Limited seating",
+    noSeating: "No seating",
+    
+    // Surface fields
+    surfaceCondition: "Surface Condition",
+    steps: "Steps on Trail",
+    noStepsLabel: "None",
+    fewStepsLabel: "Few (1-5)",
+    someStepsLabel: "Some (6-15)",
+    manyStepsLabel: "Many (15+)",
+    
+    // Visual fields
+    visualFeatures: "Visual Accessibility Features",
+    tactilePaving: "Tactile paving",
+    colorContrastMarkers: "Color contrast markers",
+    raisedEdges: "Raised edges",
+    
+    // Environment fields
+    shadeLevel: "Shade Level",
+    lighting: "Lighting",
+    litAtNight: "Lit at night",
+    partialLighting: "Partial lighting",
+    noLighting: "No lighting",
+    
+    // Signage fields
+    signageAvailable: "Available Signage",
+    trailMaps: "Trail maps",
+    distanceMarkersLabel: "Distance markers",
+    accessibilityInfoSigns: "Accessibility info",
+    brailleSignage: "Braille signage",
+    clearDirectionalSigns: "Clear directional signs",
+    
+    // Picnic fields
+    picnicTables: "Accessible Picnic Tables",
+    numTables: "Number of tables",
+    tablesInShade: "Tables in shade",
+    tablesInSun: "Tables in sun",
+    totalAreas: "Total areas",
+    viewpointAccessible: "Accessible Viewpoint",
+    hasAccessibleViewpoint: "Has accessible viewpoint",
+    noAccessibleViewpoint: "No accessible viewpoint",
+    
+    // Restroom options
+    unisexRestroom: "Unisex",
+    separateRestrooms: "Separate",
+    
+    // Amenities options
+    oneFountain: "One",
+    multipleFountains: "Multiple",
+    seatingOptions: "Seating Options",
+    noBenches: "No benches",
+    oneBench: "One bench",
+    multipleBenches: "Multiple",
+    benchFeatures: "Bench Features",
+    withHandrails: "With handrails",
+    noHandrails: "No handrails",
+    withBackrests: "With backrests",
+    
+    // Surface options
+    excellent: "Excellent",
+    smoothMaintained: "Smooth, maintained",
+    fair: "Fair",
+    minorBumps: "Minor bumps",
+    poor: "Poor",
+    roughTerrain: "Rough terrain",
+    overgrown: "Overgrown",
+    blocked: "Blocked",
+    trailSlopes: "Trail Slopes",
+    flatMild: "Flat/Mild",
+    moderateSlope: "Moderate",
+    steepSlope: "Steep",
+    
+    // Environment options
+    plentyShade: "Plenty",
+    someShade: "Some",
+    
+    // Signage options
+    highContrastSigns: "High contrast",
+    qrCodes: "QR codes"
+  },
+  he: {
+    // Header
+    formTitle: "נגישות השביל",
+    formSubtitle: "סקר קצר עוזר לאחרים לדעת למה לצפות",
+    close: "סגור",
+    
+    // Phase indicators
+    phase1: "הערכה מהירה",
+    phase2: "הוסף פרטים",
+    skipToSave: "דלג לשמירה",
+    
+    // Main questions
+    overallAccessibility: "נגישות כללית",
+    fullyAccessible: "נגיש לחלוטין",
+    fullyAccessibleDesc: "מתאים לכל אמצעי הניידות",
+    mostlyAccessible: "נגיש ברובו",
+    mostlyAccessibleDesc: "אתגרים קלים באזורים מסוימים",
+    partiallyAccessible: "נגיש חלקית",
+    partiallyAccessibleDesc: "חלק מהקטעים עלולים להיות קשים",
+    notAccessible: "לא נגיש",
+    notAccessibleDesc: "קיימים מכשולים משמעותיים",
+    
+    // Surface
+    surfaceType: "סוג משטח עיקרי",
+    paved: "סלול",
+    gravel: "חצץ",
+    dirt: "עפר/אדמה",
+    boardwalk: "דק עץ",
+    mixed: "מעורב",
+    
+    // Path width
+    pathWidth: "רוחב השביל",
+    wide: "רחב (2 מ׳+)",
+    standard: "סטנדרטי (1-2 מ׳)",
+    narrow: "צר (<1 מ׳)",
+    
+    // Slope
+    steepestSlope: "הקטע התלול ביותר",
+    flat: "שטוח",
+    gentle: "מתון",
+    moderate: "בינוני",
+    steep: "תלול",
+    
+    // Obstacles
+    obstacles: "מכשולים בשביל",
+    noObstacles: "ללא",
+    fewObstacles: "מעט",
+    someObstacles: "כמה",
+    manyObstacles: "הרבה",
+    
+    // Quick notes
+    quickNotes: "הערות קצרות (אופציונלי)",
+    notesPlaceholder: "טיפים חשובים למבקרים...",
+    
+    // Buttons
+    continueToDetails: "המשך לפרטים",
+    saveNow: "שמור עכשיו",
+    saving: "שומר...",
+    cancel: "ביטול",
+    goBack: "חזור",
+    saveSurvey: "שמור סקר",
+    
+    // Detailed sections
+    addMoreDetails: "הוסף פרטים נוספים",
+    saveCompleteSurvey: "שמור סקר מלא",
+    optional: "אופציונלי",
+    
+    // Categories
+    mobilityDetails: "פרטי ניידות",
+    surfaceDetails: "משטח ואיכות",
+    visualDetails: "סביבה חזותית",
+    facilitiesDetails: "מתקנים",
+    signageDetails: "שילוט וניווט",
+    
+    // Mobility section
+    wheelchairAccess: "נגישות לכיסא גלגלים",
+    disabledParking: "חניית נכים זמינה",
+    parkingSpaces: "מספר מקומות",
+    handrails: "מעקות במדרונות",
+    handrailsBoth: "משני הצדדים",
+    handrailsOne: "צד אחד",
+    handrailsNone: "ללא",
+    handrailsNA: "לא נדרש",
+    
+    // Surface section
+    surfaceQuality: "איכות המשטח",
+    excellent: "מצוין",
+    fair: "סביר",
+    poor: "גרוע",
+    stepsOnTrail: "מדרגות בשביל",
+    noSteps: "ללא",
+    fewSteps: "מעט (1-3)",
+    someSteps: "כמה (4-10)",
+    manySteps: "הרבה (10+)",
+    
+    // Visual section
+    shadeCoverage: "כיסוי צל",
+    mostlyShaded: "מוצל ברובו",
+    partialShade: "חלקי",
+    noShade: "ללא צל",
+    trailLit: "השביל מואר בלילה",
+    visualAdaptations: "התאמות ללקויי ראייה",
+    raisedBorders: "גבולות בולטים",
+    tactileSurfaces: "משטחים מישושיים",
+    colorContrast: "ניגודיות צבעים",
+    
+    // Facilities section
+    accessibleRestrooms: "שירותים נגישים",
+    available: "זמין",
+    notAvailable: "לא זמין",
+    nearby: "בקרבת מקום",
+    waterFountains: "ברזיות מים",
+    restAreas: "אזורי מנוחה / ספסלים",
+    none: "ללא",
+    few: "מעט",
+    many: "הרבה",
+    picnicAreas: "אזורי פיקניק נגישים",
+    viewpoint: "נקודת תצפית נגישה",
+    
+    // Signage section
+    signageQuality: "איכות השילוט",
+    good: "טוב",
+    availableSignage: "שילוט זמין",
+    routeMap: "מפת מסלול",
+    directionalSigns: "שילוט כיווני",
+    distanceMarkers: "סימוני מרחק",
+    accessibilityInfo: "מידע נגישות",
+    simpleLanguage: "שפה פשוטה",
+    audioDescription: "תיאור קולי",
+    
+    // Phase 1 fields
+    trailName: "שם השביל",
+    trailNamePlaceholder: "לדוגמה: שביל הנחל",
+    location: "מיקום",
+    locationPlaceholder: "לדוגמה: פארק הירקון, תל אביב",
+    trailSurface: "משטח השביל (בחר את כל המתאימים)",
+    concrete: "בטון",
+    stone: "אבן",
+    overallDifficulty: "רמת קושי כללית",
+    easy: "קל",
+    challenging: "מאתגר",
+    routeType: "סוג המסלול",
+    loop: "מעגלי",
+    returnsToStart: "חוזר להתחלה",
+    outAndBack: "הלוך וחזור",
+    samePathBothWays: "אותו שביל בשני הכיוונים",
+    withHelp: "עם עזרה",
+    partial: "חלקי",
+    
+    // Phase 2 fields
+    tapCategoryHint: "הקש על קטגוריה להוספת פרטים. כל השדות אופציונליים.",
+    parking: "חניה",
+    accessibleSpaces: "מקומות נגישים",
+    restrooms: "שירותים",
+    accessibleFacilities: "מתקנים נגישים",
+    waterAndSeating: "מים וישיבה",
+    fountainsBenches: "ברזיות, ספסלים",
+    shade: "צל",
+    coverageVisibility: "כיסוי ותאורה",
+    slopes: "שיפועים",
+    slopeInfo: "מדרונות ומדרגות",
+    signage: "שילוט",
+    navigation: "שילוט ניווט",
+    
+    // More Phase 2 fields
+    surfaceQualityCategory: "איכות המשטח",
+    conditionSlopes: "מצב, שיפועים",
+    visualAccess: "נגישות חזותית",
+    tactileContrast: "מישוש, ניגודיות",
+    environment: "סביבה",
+    shadeLighting: "צל, תאורה",
+    mapsDirections: "מפות, כיוונים",
+    picnicAndViews: "פיקניק ותצפיות",
+    tablesViewpoints: "שולחנות, תצפיות",
+    additionalNotesLabel: "הערות נוספות",
+    additionalNotesPlaceholder: "מידע נגישות נוסף, טיפים או אזהרות...",
+    trailLength: "אורך השביל (ק״מ)",
+    trailLengthPlaceholder: "לדוגמה: 2.5",
+    estimatedDuration: "משך משוער",
+    selectDuration: "בחר...",
+    under30: "פחות מ-30 דק׳",
+    mins30to60: "30-60 דק׳",
+    hours1to2: "1-2 שעות",
+    hours2to4: "2-4 שעות",
+    halfDay: "חצי יום",
+    fullDay: "יום שלם",
+    over4hours: "4+ שעות",
+    
+    // Trip Types
+    tripType: "סוג טיול",
+    beach: "חוף",
+    stream: "נחל",
+    park: "פארק",
+    forest: "יער",
+    urban: "עירוני",
+    scenic: "נוף",
+    
+    // Parking fields
+    accessibleParkingAvailable: "חניית נכים זמינה",
+    noAccessibleParking: "אין חניית נכים",
+    numAccessibleSpaces: "מספר מקומות נגישים",
+    
+    // Restroom fields
+    accessibleRestroomsAvailable: "שירותים נגישים זמינים",
+    noAccessibleRestrooms: "אין שירותים נגישים",
+    nearbyRestrooms: "שירותים בקרבת מקום (לא על השביל)",
+    
+    // Amenities fields
+    waterFountainsLabel: "ברזיות מים",
+    accessibleWaterAvailable: "ברזייה נגישה",
+    noWaterFountain: "אין ברזייה",
+    seatingBenches: "ישיבה / ספסלים",
+    frequentSeating: "ישיבה תכופה",
+    someSeating: "מעט ישיבה",
+    limitedSeating: "ישיבה מוגבלת",
+    noSeating: "אין ישיבה",
+    
+    // Surface fields
+    surfaceCondition: "מצב המשטח",
+    steps: "מדרגות בשביל",
+    noStepsLabel: "ללא",
+    fewStepsLabel: "מעט (1-5)",
+    someStepsLabel: "כמה (6-15)",
+    manyStepsLabel: "הרבה (15+)",
+    
+    // Visual fields
+    visualFeatures: "תכונות נגישות חזותית",
+    tactilePaving: "ריצוף מישושי",
+    colorContrastMarkers: "סמנים בניגודיות צבע",
+    raisedEdges: "שוליים מוגבהים",
+    
+    // Environment fields
+    shadeLevel: "רמת צל",
+    lighting: "תאורה",
+    litAtNight: "מואר בלילה",
+    partialLighting: "תאורה חלקית",
+    noLighting: "ללא תאורה",
+    
+    // Signage fields
+    signageAvailable: "שילוט זמין",
+    trailMaps: "מפות שביל",
+    distanceMarkersLabel: "סימוני מרחק",
+    accessibilityInfoSigns: "מידע נגישות",
+    brailleSignage: "שילוט ברייל",
+    clearDirectionalSigns: "שילוט כיווני ברור",
+    
+    // Picnic fields
+    picnicTables: "שולחנות פיקניק נגישים",
+    numTables: "מספר שולחנות",
+    tablesInShade: "בצל",
+    tablesInSun: "בשמש",
+    totalAreas: "סה״כ אזורים",
+    viewpointAccessible: "נקודת תצפית נגישה",
+    hasAccessibleViewpoint: "יש נקודת תצפית נגישה",
+    noAccessibleViewpoint: "אין נקודת תצפית נגישה",
+    
+    // Restroom options
+    unisexRestroom: "יוניסקס",
+    separateRestrooms: "נפרדים",
+    
+    // Amenities options
+    oneFountain: "אחת",
+    multipleFountains: "מרובות",
+    seatingOptions: "אפשרויות ישיבה",
+    noBenches: "אין ספסלים",
+    oneBench: "ספסל אחד",
+    multipleBenches: "מרובים",
+    benchFeatures: "תכונות הספסלים",
+    withHandrails: "עם מעקות",
+    noHandrails: "ללא מעקות",
+    withBackrests: "עם משענות גב",
+    
+    // Surface options
+    excellent: "מצוין",
+    smoothMaintained: "חלק, מתוחזק",
+    fair: "סביר",
+    minorBumps: "מהמורות קלות",
+    poor: "גרוע",
+    roughTerrain: "שטח קשה",
+    overgrown: "מוצמח",
+    blocked: "חסום",
+    trailSlopes: "שיפועי השביל",
+    flatMild: "שטוח/קל",
+    moderateSlope: "בינוני",
+    steepSlope: "תלול",
+    
+    // Environment options
+    plentyShade: "הרבה",
+    someShade: "קצת",
+    
+    // Signage options
+    highContrastSigns: "ניגודיות גבוהה",
+    qrCodes: "קודי QR"
+  }
+};
+
+export class AccessibilityFormV2Quick {
+  constructor() {
+    this.isOpen = false;
+    this.currentCallback = null;
+    this.formData = {};
+    this.currentPhase = 1; // 1 = Quick, 2 = Detailed
+    this.expandedCategories = new Set();
+    this.userMobilityProfile = null; // Cache user's mobility profile
+    this.lang = localStorage.getItem('accessNature_language') || 'en';
+  }
+
+  /**
+   * Get translation for key
+   */
+  t(key) {
+    return formTranslations[this.lang]?.[key] || formTranslations['en']?.[key] || key;
+  }
+
+  /**
+   * Update language and refresh form
+   */
+  updateLanguage(newLang) {
+    this.lang = newLang;
+    const overlay = document.getElementById('af2-overlay');
+    if (overlay) {
+      // Collect current form data BEFORE re-rendering
+      const savedFormData = this.collectFormData();
+      const savedPhase = this.currentPhase;
+      const wasExpanded = overlay.querySelector('.af2-category-card.expanded')?.dataset.category;
+      
+      // Set RTL direction for Hebrew
+      overlay.dir = this.lang === 'he' ? 'rtl' : 'ltr';
+      overlay.lang = this.lang;
+      
+      // Re-render form
+      this.loadFormHTML();
+      this.setupEventListeners();
+      
+      // Restore phase
+      this.currentPhase = savedPhase;
+      this.goToPhase(savedPhase);
+      
+      // Restore all form data
+      this.restoreFormDataFull(savedFormData);
+      
+      // Restore expanded category
+      if (wasExpanded) {
+        const card = overlay.querySelector(`.af2-category-card[data-category="${wasExpanded}"]`);
+        if (card) card.classList.add('expanded');
+      }
+    }
+  }
+
+  /**
+   * Restore form data after language change - full version with selections
+   */
+  restoreFormDataFull(data) {
+    const overlay = document.getElementById('af2-overlay');
+    if (!overlay || !data) return;
+    
+    // Restore text input values
+    Object.entries(data).forEach(([key, value]) => {
+      if (value === null || value === undefined) return;
+      
+      const input = overlay.querySelector(`[name="${key}"]`);
+      if (input) {
+        if (input.type === 'checkbox') {
+          input.checked = !!value;
+        } else {
+          input.value = value;
+        }
+      }
+      
+      // Restore card/chip selections
+      const grid = overlay.querySelector(`[data-field="${key}"]`);
+      if (grid) {
+        if (Array.isArray(value)) {
+          // Multi-select
+          value.forEach(v => {
+            const item = grid.querySelector(`[data-value="${v}"]`);
+            if (item) item.classList.add('selected');
+          });
+        } else if (typeof value === 'string' && value) {
+          // Single select
+          const item = grid.querySelector(`[data-value="${value}"]`);
+          if (item) item.classList.add('selected');
+        }
+      }
+      
+      // Restore checkbox data-field items
+      const checkbox = overlay.querySelector(`.af2-checkbox[data-field="${key}"]`);
+      if (checkbox && value) {
+        checkbox.classList.add('selected');
+      }
+    });
+    
+    // Restore difficulty slider
+    if (data.difficulty) {
+      const slider = overlay.querySelector('#af2-difficulty');
+      if (slider) {
+        slider.value = data.difficulty;
+        const labels = overlay.querySelectorAll('.af2-slider-label');
+        labels.forEach(l => l.classList.remove('active'));
+        const activeLabel = overlay.querySelector(`.af2-slider-label[data-level="${data.difficulty}"]`);
+        if (activeLabel) activeLabel.classList.add('active');
+      }
+    }
+    
+    // Update category status indicators
+    overlay.querySelectorAll('.af2-category-card').forEach(card => {
+      const category = card.dataset.category;
+      const content = card.querySelector('.af2-category-content');
+      if (content) {
+        const hasData = content.querySelector('.selected, input:not([value=""]), select option:checked:not([value=""])');
+        if (hasData) card.classList.add('has-data');
+      }
+    });
+  }
+
+  /**
+   * Restore form data after language change (simple version for backwards compatibility)
+   */
+  restoreFormData() {
+    const overlay = document.getElementById('af2-overlay');
+    if (!overlay) return;
+    
+    // Restore input values
+    Object.entries(this.formData).forEach(([key, value]) => {
+      if (typeof value === 'string' || typeof value === 'number') {
+        const input = overlay.querySelector(`[name="${key}"]`);
+        if (input) input.value = value;
+      }
+    });
+  }
+
+  initialize() {
+    this.injectStyles();
+    this.loadFormHTML();
+    this.setupEventListeners();
+    
+    // Register for i18n refresh
+    if (window.i18n) {
+      window.i18n.registerForRefresh('accessibilityFormV2Quick', (lang) => {
+        this.updateLanguage(lang);
+      });
+    }
+    
+    // Listen for languageChanged event as backup
+    window.addEventListener('languageChanged', (e) => {
+      this.updateLanguage(e.detail.newLang);
+    });
+  }
+
+  injectStyles() {
+    if (document.getElementById('accessibility-form-v2-styles')) return;
+    
+    const styles = document.createElement('style');
+    styles.id = 'accessibility-form-v2-styles';
+    styles.textContent = `
+      /* ========== Global Reset ========== */
+      .af2-overlay *,
+      .af2-overlay *::before,
+      .af2-overlay *::after {
+        box-sizing: border-box;
+      }
+      
+      /* ========== Form Container ========== */
+      .af2-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 9999;
+        display: none;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 80px 20px 20px 20px; /* Account for nav bars at top */
+      }
+      
+      .af2-overlay.open {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+      }
+      
+      .af2-container {
+        background: white;
+        border-radius: 20px;
+        max-width: 600px;
+        width: 100%;
+        margin: 0 auto 20px auto;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        overflow: hidden;
+        animation: af2-slideUp 0.3s ease;
+        max-height: calc(100vh - 100px); /* Ensure it fits in viewport */
+        display: flex;
+        flex-direction: column;
+      }
+      
+      @keyframes af2-slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      /* ========== Header ========== */
+      .af2-header {
+        background: linear-gradient(135deg, #2c5530 0%, #4a7c59 100%);
+        color: white;
+        padding: 24px;
+        position: relative;
+      }
+      
+      .af2-header h1 {
+        font-size: 1.5rem;
+        margin: 0 0 8px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      
+      .af2-header p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 0.95rem;
+      }
+      
+      .af2-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        font-size: 20px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      
+      .af2-close:hover {
+        background: rgba(255,255,255,0.3);
+      }
+      
+      /* ========== Progress ========== */
+      .af2-progress {
+        display: flex;
+        padding: 16px 24px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        gap: 8px;
+      }
+      
+      .af2-progress-step {
+        flex: 1;
+        text-align: center;
+        padding: 8px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #999;
+        background: #e9ecef;
+        transition: all 0.3s;
+      }
+      
+      .af2-progress-step.active {
+        background: #4a7c59;
+        color: white;
+      }
+      
+      .af2-progress-step.completed {
+        background: #d4edda;
+        color: #155724;
+      }
+      
+      /* ========== Form Body ========== */
+      .af2-body {
+        padding: 24px;
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        min-height: 0; /* Required for flex child scrolling */
+      }
+      
+      .af2-phase {
+        display: none;
+      }
+      
+      .af2-phase.active {
+        display: block;
+        animation: af2-fadeIn 0.3s ease;
+      }
+      
+      @keyframes af2-fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      /* ========== Form Fields ========== */
+      .af2-field {
+        margin-bottom: 24px;
+      }
+      
+      .af2-field:last-child {
+        margin-bottom: 0;
+      }
+      
+      .af2-label {
+        display: block;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 0.95rem;
+      }
+      
+      .af2-label .required {
+        color: #dc3545;
+        margin-left: 4px;
+      }
+      
+      .af2-input {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-sizing: border-box;
+      }
+      
+      .af2-input:focus {
+        outline: none;
+        border-color: #4a7c59;
+        box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
+      }
+      
+      /* ========== Visual Selection Cards ========== */
+      .af2-card-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+      
+      .af2-card-grid.cols-3 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      
+      .af2-card-grid.cols-4 {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      
+      .af2-card-grid.cols-5 {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      
+      .af2-select-card {
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 16px 12px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: white;
+      }
+      
+      .af2-select-card:hover {
+        border-color: #4a7c59;
+        background: #f8fff8;
+      }
+      
+      .af2-select-card.selected {
+        border-color: #4a7c59;
+        background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+      }
+      
+      .af2-select-card .card-icon {
+        font-size: 2rem;
+        margin-bottom: 8px;
+        display: block;
+      }
+      
+      .af2-select-card .card-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #333;
+        display: block;
+      }
+      
+      .af2-select-card .card-desc {
+        font-size: 0.75rem;
+        color: #666;
+        margin-top: 4px;
+        display: block;
+      }
+      
+      /* Multi-select chips */
+      .af2-chip-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        max-width: 100%;
+      }
+      
+      .af2-chip {
+        padding: 10px 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: white;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 1;
+        max-width: 100%;
+        box-sizing: border-box;
+        word-wrap: break-word;
+      }
+      
+      .af2-chip:hover {
+        border-color: #4a7c59;
+      }
+      
+      .af2-chip.selected {
+        border-color: #4a7c59;
+        background: #4a7c59;
+        color: white;
+      }
+      
+      /* ========== Difficulty Slider ========== */
+      .af2-slider-container {
+        padding: 10px 0;
+      }
+      
+      .af2-slider-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      
+      .af2-slider-label {
+        font-size: 0.8rem;
+        color: #666;
+        text-align: center;
+      }
+      
+      .af2-slider-label.active {
+        color: #4a7c59;
+        font-weight: 600;
+      }
+      
+      .af2-slider {
+        width: 100%;
+        height: 8px;
+        -webkit-appearance: none;
+        background: linear-gradient(to right, #22c55e 0%, #f59e0b 50%, #ef4444 100%);
+        border-radius: 4px;
+        outline: none;
+      }
+      
+      .af2-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 24px;
+        height: 24px;
+        background: white;
+        border: 3px solid #4a7c59;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      }
+      
+      /* ========== Category Cards (Phase 2) ========== */
+      .af2-category-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      
+      .af2-category-card {
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: white;
+        position: relative;
+      }
+      
+      .af2-category-card:hover {
+        border-color: #4a7c59;
+      }
+      
+      .af2-category-card.expanded {
+        grid-column: 1 / -1;
+        border-color: #4a7c59;
+        background: #f8fff8;
+      }
+      
+      .af2-category-card.has-data {
+        border-color: #28a745;
+      }
+      
+      .af2-category-card .cat-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      
+      .af2-category-card .cat-icon {
+        font-size: 1.5rem;
+      }
+      
+      .af2-category-card .cat-info {
+        flex: 1;
+      }
+      
+      .af2-category-card .cat-title {
+        font-weight: 600;
+        color: #333;
+        font-size: 0.95rem;
+      }
+      
+      .af2-category-card .cat-desc {
+        font-size: 0.8rem;
+        color: #666;
+      }
+      
+      .af2-category-card .cat-status {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid #e0e0e0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: transparent;
+      }
+      
+      .af2-category-card.has-data .cat-status {
+        background: #28a745;
+        border-color: #28a745;
+        color: white;
+      }
+      
+      .af2-category-content {
+        display: none;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #e0e0e0;
+      }
+      
+      .af2-category-card.expanded .af2-category-content {
+        display: block;
+      }
+      
+      /* ========== Subsection in Categories ========== */
+      .af2-subsection {
+        margin-bottom: 20px;
+      }
+      
+      .af2-subsection:last-child {
+        margin-bottom: 0;
+      }
+      
+      .af2-subsection-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #555;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      /* ========== Number Input with Stepper ========== */
+      .af2-number-input {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .af2-number-input button {
+        width: 36px;
+        height: 36px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        background: white;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      
+      .af2-number-input button:hover {
+        border-color: #4a7c59;
+        background: #f8fff8;
+      }
+      
+      .af2-number-input input {
+        width: 60px;
+        text-align: center;
+        padding: 8px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1rem;
+      }
+      
+      .af2-number-input.af2-readonly {
+        justify-content: center;
+      }
+      
+      .af2-number-input.af2-readonly input {
+        background: #f0f9f0;
+        border-color: #4a7c59;
+        color: #2c5530;
+        font-weight: 600;
+        cursor: default;
+      }
+      
+      /* ========== Notes Textarea ========== */
+      .af2-textarea {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        font-size: 1rem;
+        min-height: 100px;
+        resize: vertical;
+        font-family: inherit;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-sizing: border-box;
+      }
+      
+      .af2-textarea:focus {
+        outline: none;
+        border-color: #4a7c59;
+        box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
+      }
+      
+      /* ========== Footer Buttons ========== */
+      .af2-footer {
+        padding: 20px 24px;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      
+      .af2-btn {
+        flex: 1;
+        padding: 14px 24px;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        min-width: 140px;
+      }
+      
+      .af2-btn-primary {
+        background: linear-gradient(135deg, #4a7c59 0%, #2c5530 100%);
+        color: white;
+      }
+      
+      .af2-btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(74, 124, 89, 0.4);
+      }
+      
+      .af2-btn-secondary {
+        background: white;
+        color: #4a7c59;
+        border: 2px solid #4a7c59;
+      }
+      
+      .af2-btn-secondary:hover {
+        background: #f8fff8;
+      }
+      
+      .af2-btn-text {
+        background: transparent;
+        color: #666;
+        flex: none;
+        padding: 14px 16px;
+      }
+      
+      .af2-btn-text:hover {
+        color: #333;
+      }
+      
+      /* ========== Divider ========== */
+      .af2-divider {
+        height: 1px;
+        background: #e9ecef;
+        margin: 24px 0;
+      }
+      
+      /* Responsive 3-column grid - MUST be before media queries */
+      .af2-grid-3col {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        max-width: 100%;
+      }
+      
+      /* ========== Mobile Responsive ========== */
+      @media (max-width: 600px) {
+        .af2-overlay {
+          padding: 0;
+          padding-top: calc(60px + env(safe-area-inset-top, 0)); /* Account for nav bar */
+        }
+        
+        .af2-container {
+          margin: 0;
+          border-radius: 16px 16px 0 0;
+          max-width: 100vw;
+          width: 100%;
+          height: calc(100vh - 60px);
+          height: calc(100dvh - 60px); /* Dynamic viewport height for mobile */
+          max-height: calc(100vh - 60px);
+          max-height: calc(100dvh - 60px);
+          overflow: hidden;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .af2-header {
+          padding: 16px;
+          padding-top: 20px; /* Extra space for close button */
+          flex-shrink: 0;
+        }
+        
+        .af2-header h1 {
+          font-size: 1.25rem;
+        }
+        
+        .af2-body {
+          padding: 16px;
+          flex: 1;
+          overflow-y: auto;
+          overflow-x: hidden;
+          -webkit-overflow-scrolling: touch;
+          box-sizing: border-box;
+          min-height: 0;
+        }
+        
+        .af2-footer {
+          flex-direction: column;
+          padding: 16px;
+          flex-shrink: 0;
+          padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
+        }
+        
+        .af2-card-grid,
+        .af2-card-grid.cols-3,
+        .af2-card-grid.cols-4,
+        .af2-card-grid.cols-5 {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .af2-category-grid {
+          grid-template-columns: 1fr;
+        }
+        
+        .af2-category-content {
+          max-width: 100%;
+          overflow-x: hidden;
+          padding: 16px;
+          box-sizing: border-box;
+        }
+        
+        .af2-category-card {
+          max-width: 100%;
+          overflow: hidden;
+        }
+        
+        .af2-btn {
+          width: 100%;
+        }
+        
+        /* Fix 3-column grid on mobile - stack vertically */
+        .af2-grid-3col {
+          grid-template-columns: 1fr !important;
+          gap: 16px;
+          max-width: 100%;
+        }
+        
+        .af2-number-input {
+          justify-content: flex-start;
+          max-width: 100%;
+        }
+        
+        .af2-number-input input {
+          width: 50px;
+        }
+        
+        .af2-subsection {
+          max-width: 100%;
+          overflow-x: hidden;
+          box-sizing: border-box;
+        }
+        
+        /* Fix chip grids overflow */
+        .af2-chip-grid {
+          max-width: 100%;
+        }
+        
+        .af2-chip {
+          flex-shrink: 1;
+          font-size: 0.85rem;
+          padding: 8px 12px;
+        }
+        
+        /* Ensure all sections don't overflow */
+        .af2-section,
+        .af2-category,
+        .af2-phase {
+          max-width: 100%;
+          overflow-x: hidden;
+          box-sizing: border-box;
+        }
+        
+        /* Fix textarea width */
+        .af2-textarea {
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+        
+        /* Fix select input */
+        .af2-select {
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+        
+        /* Fix text input */
+        .af2-input {
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+      }
+      
+      @media (max-width: 400px) {
+        .af2-card-grid,
+        .af2-card-grid.cols-3,
+        .af2-card-grid.cols-4 {
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+        }
+        
+        .af2-select-card {
+          padding: 12px 8px;
+        }
+        
+        .af2-select-card .card-icon {
+          font-size: 1.5rem;
+        }
+        
+        .af2-select-card .card-label {
+          font-size: 0.75rem;
+        }
+        
+        .af2-chip {
+          font-size: 0.8rem;
+          padding: 6px 10px;
+        }
+        
+        .af2-number-input button {
+          width: 32px;
+          height: 32px;
+          font-size: 1rem;
+        }
+        
+        .af2-number-input input {
+          width: 45px;
+          padding: 6px;
+        }
+      }
+      
+      /* ========== RTL Support for Hebrew ========== */
+      .af2-overlay[dir="rtl"] {
+        text-align: right;
+      }
+      
+      .af2-overlay[dir="rtl"] .af2-header {
+        text-align: right;
+      }
+      
+      .af2-overlay[dir="rtl"] .af2-header .af2-close {
+        left: 16px;
+        right: auto;
+      }
+      
+      .af2-overlay[dir="rtl"] .cat-header {
+        flex-direction: row-reverse;
+      }
+      
+      .af2-overlay[dir="rtl"] .cat-info {
+        text-align: right;
+      }
+      
+      .af2-overlay[dir="rtl"] .af2-footer {
+        flex-direction: row-reverse;
+      }
+      
+      .af2-overlay[dir="rtl"] .af2-label {
+        text-align: right;
+      }
+      
+      .af2-overlay[dir="rtl"] .af2-input,
+      .af2-overlay[dir="rtl"] .af2-textarea,
+      .af2-overlay[dir="rtl"] .af2-select {
+        text-align: right;
+        direction: rtl;
+      }
+      
+      .af2-overlay[dir="rtl"] .af2-chip-grid {
+        direction: rtl;
+      }
+      
+      .af2-overlay[dir="rtl"] .af2-number-input {
+        flex-direction: row-reverse;
+      }
+      
+      .af2-overlay[dir="rtl"] .af2-checkbox {
+        flex-direction: row-reverse;
+      }
+      
+      .af2-overlay[dir="rtl"] .af2-subsection-label {
+        text-align: right;
+      }
+      
+      .af2-overlay[dir="rtl"] .card-desc {
+        text-align: right;
+      }
+      
+      .af2-overlay[dir="rtl"] .af2-category-card {
+        text-align: right;
+      }
+      
+      .af2-overlay[dir="rtl"] .af2-category-grid {
+        direction: rtl;
+      }
+      
+      .af2-overlay[dir="rtl"] .af2-category-content {
+        text-align: right;
+      }
+      
+      .af2-overlay[dir="rtl"] .af2-card-grid {
+        direction: rtl;
+      }
+      
+      .af2-overlay[dir="rtl"] .af2-select-card {
+        text-align: center;
+      }
+      
+      .af2-overlay[dir="rtl"] .af2-subsection-title {
+        text-align: right;
+      }
+    `;
+    
+    document.head.appendChild(styles);
+  }
+
+  loadFormHTML() {
+    // Refresh language from localStorage
+    this.lang = localStorage.getItem('accessNature_language') || 'en';
+    const t = (key) => this.t(key);
+    const isRTL = this.lang === 'he';
+    
+    // Create overlay container if it doesn't exist
+    let overlay = document.getElementById('af2-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'af2-overlay';
+      overlay.className = 'af2-overlay';
+      document.body.appendChild(overlay);
+    }
+    
+    // Set RTL direction
+    overlay.dir = isRTL ? 'rtl' : 'ltr';
+    overlay.lang = this.lang;
+    
+    overlay.innerHTML = `
+      <div class="af2-container">
+        <!-- Header -->
+        <div class="af2-header">
+          <h1>🌲 ${t('formTitle')}</h1>
+          <p>${t('formSubtitle')}</p>
+          <button class="af2-close" onclick="window.closeAccessibilityFormV2()">×</button>
+        </div>
+        
+        <!-- Progress -->
+        <div class="af2-progress">
+          <div class="af2-progress-step active" data-step="1">① ${t('phase1')}</div>
+          <div class="af2-progress-step" data-step="2">② ${t('phase2')} (${t('optional')})</div>
+        </div>
+        
+        <!-- Form Body -->
+        <div class="af2-body">
+          <!-- Phase 1: Quick Assessment -->
+          <div class="af2-phase active" data-phase="1">
+            ${this.renderPhase1()}
+          </div>
+          
+          <!-- Phase 2: Detailed Categories -->
+          <div class="af2-phase" data-phase="2">
+            ${this.renderPhase2()}
+          </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="af2-footer">
+          <button class="af2-btn af2-btn-text" onclick="window.closeAccessibilityFormV2()">${t('cancel')}</button>
+          <button class="af2-btn af2-btn-secondary" id="af2-back-btn" style="display:none" onclick="window.af2GoBack()">← ${t('goBack')}</button>
+          <button class="af2-btn af2-btn-primary" id="af2-next-btn" onclick="window.af2Next()">${t('saveNow')} ✓</button>
+        </div>
+      </div>
+    `;
+  }
+
+  renderPhase1() {
+    const t = (key) => this.t(key);
+    return `
+      <!-- Trail Name -->
+      <div class="af2-field">
+        <label class="af2-label">${t('trailName')} <span class="required">*</span></label>
+        <input type="text" class="af2-input" id="af2-trailName" name="trailName" placeholder="${t('trailNamePlaceholder')}" required>
+      </div>
+      
+      <!-- Location -->
+      <div class="af2-field">
+        <label class="af2-label">${t('location')} <span class="required">*</span></label>
+        <input type="text" class="af2-input" id="af2-location" name="location" placeholder="${t('locationPlaceholder')}" required>
+      </div>
+      
+      <div class="af2-divider"></div>
+      
+      <!-- Wheelchair Accessibility -->
+      <div class="af2-field">
+        <label class="af2-label">${t('wheelchairAccess')}</label>
+        <div class="af2-card-grid cols-4" data-field="wheelchairAccess" data-type="single">
+          <div class="af2-select-card" data-value="Fully accessible">
+            <span class="card-icon">♿</span>
+            <span class="card-label">${t('fullyAccessible')}</span>
+          </div>
+          <div class="af2-select-card" data-value="Partially accessible">
+            <span class="card-icon">⚠️</span>
+            <span class="card-label">${t('partial')}</span>
+          </div>
+          <div class="af2-select-card" data-value="Accessible with assistance">
+            <span class="card-icon">🤝</span>
+            <span class="card-label">${t('withHelp')}</span>
+          </div>
+          <div class="af2-select-card" data-value="Not accessible">
+            <span class="card-icon">🚫</span>
+            <span class="card-label">${t('notAccessible')}</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Surface Type -->
+      <div class="af2-field">
+        <label class="af2-label">${t('trailSurface')}</label>
+        <div class="af2-chip-grid" data-field="trailSurface" data-type="multi">
+          <div class="af2-chip" data-value="Asphalt">🛣️ ${t('paved')}</div>
+          <div class="af2-chip" data-value="Concrete">⬜ ${t('concrete')}</div>
+          <div class="af2-chip" data-value="Compacted Gravel">⚪ ${t('gravel')}</div>
+          <div class="af2-chip" data-value="Stone">🪨 ${t('stone')}</div>
+          <div class="af2-chip" data-value="Wood/Plastic Deck">🪵 ${t('boardwalk')}</div>
+          <div class="af2-chip" data-value="Grass">🌿 ${t('dirt')}</div>
+          <div class="af2-chip" data-value="Mixed Surfaces">🔀 ${t('mixed')}</div>
+        </div>
+      </div>
+      
+      <!-- Difficulty Slider -->
+      <div class="af2-field">
+        <label class="af2-label">${t('overallDifficulty')}</label>
+        <div class="af2-slider-container">
+          <div class="af2-slider-labels">
+            <span class="af2-slider-label active" data-level="1">😊 ${t('easy')}</span>
+            <span class="af2-slider-label" data-level="2">😐 ${t('moderate')}</span>
+            <span class="af2-slider-label" data-level="3">😰 ${t('challenging')}</span>
+          </div>
+          <input type="range" class="af2-slider" id="af2-difficulty" name="difficulty" min="1" max="3" value="1">
+        </div>
+      </div>
+      
+      <!-- Route Type Quick -->
+      <div class="af2-field">
+        <label class="af2-label">${t('routeType')}</label>
+        <div class="af2-card-grid" data-field="routeType" data-type="single">
+          <div class="af2-select-card" data-value="Circular">
+            <span class="card-icon">🔄</span>
+            <span class="card-label">${t('loop')}</span>
+            <span class="card-desc">${t('returnsToStart')}</span>
+          </div>
+          <div class="af2-select-card" data-value="Round Trip">
+            <span class="card-icon">↔️</span>
+            <span class="card-label">${t('outAndBack')}</span>
+            <span class="card-desc">${t('samePathBothWays')}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderPhase2() {
+    const t = (key) => this.t(key);
+    return `
+      <p style="color: #666; margin-bottom: 20px; text-align: center;">
+        ${t('tapCategoryHint')}
+      </p>
+      
+      <div class="af2-category-grid">
+        <!-- Parking -->
+        <div class="af2-category-card" data-category="parking">
+          <div class="cat-header">
+            <span class="cat-icon">🅿️</span>
+            <div class="cat-info">
+              <div class="cat-title">${t('parking')}</div>
+              <div class="cat-desc">${t('accessibleSpaces')}</div>
+            </div>
+            <div class="cat-status">✓</div>
+          </div>
+          <div class="af2-category-content">
+            ${this.renderParkingFields()}
+          </div>
+        </div>
+        
+        <!-- Restrooms -->
+        <div class="af2-category-card" data-category="restrooms">
+          <div class="cat-header">
+            <span class="cat-icon">🚻</span>
+            <div class="cat-info">
+              <div class="cat-title">${t('restrooms')}</div>
+              <div class="cat-desc">${t('accessibleFacilities')}</div>
+            </div>
+            <div class="cat-status">✓</div>
+          </div>
+          <div class="af2-category-content">
+            ${this.renderRestroomFields()}
+          </div>
+        </div>
+        
+        <!-- Water & Seating -->
+        <div class="af2-category-card" data-category="amenities">
+          <div class="cat-header">
+            <span class="cat-icon">🚰</span>
+            <div class="cat-info">
+              <div class="cat-title">${t('waterAndSeating')}</div>
+              <div class="cat-desc">${t('fountainsBenches')}</div>
+            </div>
+            <div class="cat-status">✓</div>
+          </div>
+          <div class="af2-category-content">
+            ${this.renderAmenitiesFields()}
+          </div>
+        </div>
+        
+        <!-- Surface Details -->
+        <div class="af2-category-card" data-category="surface">
+          <div class="cat-header">
+            <span class="cat-icon">🛤️</span>
+            <div class="cat-info">
+              <div class="cat-title">${t('surfaceQualityCategory')}</div>
+              <div class="cat-desc">${t('conditionSlopes')}</div>
+            </div>
+            <div class="cat-status">✓</div>
+          </div>
+          <div class="af2-category-content">
+            ${this.renderSurfaceFields()}
+          </div>
+        </div>
+        
+        <!-- Visual Accessibility -->
+        <div class="af2-category-card" data-category="visual">
+          <div class="cat-header">
+            <span class="cat-icon">👁️</span>
+            <div class="cat-info">
+              <div class="cat-title">${t('visualAccess')}</div>
+              <div class="cat-desc">${t('tactileContrast')}</div>
+            </div>
+            <div class="cat-status">✓</div>
+          </div>
+          <div class="af2-category-content">
+            ${this.renderVisualFields()}
+          </div>
+        </div>
+        
+        <!-- Environment -->
+        <div class="af2-category-card" data-category="environment">
+          <div class="cat-header">
+            <span class="cat-icon">⛱️</span>
+            <div class="cat-info">
+              <div class="cat-title">${t('environment')}</div>
+              <div class="cat-desc">${t('shadeLighting')}</div>
+            </div>
+            <div class="cat-status">✓</div>
+          </div>
+          <div class="af2-category-content">
+            ${this.renderEnvironmentFields()}
+          </div>
+        </div>
+        
+        <!-- Signage -->
+        <div class="af2-category-card" data-category="signage">
+          <div class="cat-header">
+            <span class="cat-icon">🪧</span>
+            <div class="cat-info">
+              <div class="cat-title">${t('signage')}</div>
+              <div class="cat-desc">${t('mapsDirections')}</div>
+            </div>
+            <div class="cat-status">✓</div>
+          </div>
+          <div class="af2-category-content">
+            ${this.renderSignageFields()}
+          </div>
+        </div>
+        
+        <!-- Picnic & Views -->
+        <div class="af2-category-card" data-category="picnic">
+          <div class="cat-header">
+            <span class="cat-icon">🧺</span>
+            <div class="cat-info">
+              <div class="cat-title">${t('picnicAndViews')}</div>
+              <div class="cat-desc">${t('tablesViewpoints')}</div>
+            </div>
+            <div class="cat-status">✓</div>
+          </div>
+          <div class="af2-category-content">
+            ${this.renderPicnicFields()}
+          </div>
+        </div>
+      </div>
+      
+      <!-- Additional Notes -->
+      <div class="af2-field">
+        <label class="af2-label">📝 ${t('additionalNotesLabel')}</label>
+        <textarea class="af2-textarea" id="af2-additionalNotes" name="additionalNotes" 
+          placeholder="${t('additionalNotesPlaceholder')}"></textarea>
+      </div>
+      
+      <!-- Trail Info -->
+      <div class="af2-divider"></div>
+      
+      <div class="af2-field" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div>
+          <label class="af2-label">${t('trailLength')}</label>
+          <input type="number" class="af2-input" id="af2-trailLength" name="trailLength" step="0.1" min="0" placeholder="${t('trailLengthPlaceholder')}">
+        </div>
+        <div>
+          <label class="af2-label">${t('estimatedDuration')}</label>
+          <select class="af2-input" id="af2-estimatedTime" name="estimatedTime">
+            <option value="">${t('selectDuration')}</option>
+            <option value="Under 30 minutes">${t('under30')}</option>
+            <option value="30-60 minutes">${t('mins30to60')}</option>
+            <option value="1-2 hours">${t('hours1to2')}</option>
+            <option value="2-4 hours">${t('hours2to4')}</option>
+            <option value="Half day">${t('halfDay')}</option>
+            <option value="Full day">${t('fullDay')}</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Trip Type -->
+      <div class="af2-field">
+        <label class="af2-label">${t('tripType')}</label>
+        <div class="af2-chip-grid" data-field="tripType" data-type="single">
+          <div class="af2-chip" data-value="Beach Promenade">🏖️ ${t('beach')}</div>
+          <div class="af2-chip" data-value="Stream Path">🌊 ${t('stream')}</div>
+          <div class="af2-chip" data-value="Park Route">🌳 ${t('park')}</div>
+          <div class="af2-chip" data-value="Forest Trail">🌲 ${t('forest')}</div>
+          <div class="af2-chip" data-value="Urban Route">🏙️ ${t('urban')}</div>
+          <div class="af2-chip" data-value="Scenic Drive">🚗 ${t('scenic')}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderParkingFields() {
+    const t = (key) => this.t(key);
+    return `
+      <div class="af2-subsection">
+        <div class="af2-chip-grid" data-field="disabledParking" data-type="single">
+          <div class="af2-chip" data-value="Available">✓ ${t('accessibleParkingAvailable')}</div>
+          <div class="af2-chip" data-value="Not available">✗ ${t('noAccessibleParking')}</div>
+        </div>
+      </div>
+      <div class="af2-subsection">
+        <div class="af2-subsection-title">${t('numAccessibleSpaces')}</div>
+        <div class="af2-number-input">
+          <button type="button" onclick="window.af2NumberStep('parkingSpaces', -1)">−</button>
+          <input type="number" id="af2-parkingSpaces" name="parkingSpaces" value="0" min="0">
+          <button type="button" onclick="window.af2NumberStep('parkingSpaces', 1)">+</button>
+        </div>
+      </div>
+    `;
+  }
+
+  renderRestroomFields() {
+    const t = (key) => this.t(key);
+    return `
+      <div class="af2-card-grid" data-field="restrooms" data-type="single">
+        <div class="af2-select-card" data-value="None">
+          <span class="card-icon">🚫</span>
+          <span class="card-label">${t('none')}</span>
+        </div>
+        <div class="af2-select-card" data-value="One unisex accessible restroom">
+          <span class="card-icon">🚻</span>
+          <span class="card-label">${t('unisexRestroom')}</span>
+        </div>
+        <div class="af2-select-card" data-value="Separate accessible restrooms for men and women">
+          <span class="card-icon">🚹🚺</span>
+          <span class="card-label">${t('separateRestrooms')}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  renderAmenitiesFields() {
+    const t = (key) => this.t(key);
+    return `
+      <div class="af2-subsection">
+        <div class="af2-subsection-title">${t('waterFountainsLabel')}</div>
+        <div class="af2-card-grid cols-3" data-field="waterFountains" data-type="single">
+          <div class="af2-select-card" data-value="None">
+            <span class="card-label">${t('none')}</span>
+          </div>
+          <div class="af2-select-card" data-value="One accessible fountain">
+            <span class="card-label">${t('oneFountain')}</span>
+          </div>
+          <div class="af2-select-card" data-value="Multiple fountains along route">
+            <span class="card-label">${t('multipleFountains')}</span>
+          </div>
+        </div>
+      </div>
+      <div class="af2-subsection">
+        <div class="af2-subsection-title">${t('seatingOptions')}</div>
+        <div class="af2-chip-grid" data-field="seating" data-type="single">
+          <div class="af2-chip" data-value="No accessible benches">${t('noBenches')}</div>
+          <div class="af2-chip" data-value="One accessible bench">${t('oneBench')}</div>
+          <div class="af2-chip" data-value="Multiple benches along route">${t('multipleBenches')}</div>
+        </div>
+      </div>
+      <div class="af2-subsection">
+        <div class="af2-subsection-title">${t('benchFeatures')}</div>
+        <div class="af2-chip-grid" data-field="benchFeatures" data-type="multi">
+          <div class="af2-chip" data-value="With handrails">${t('withHandrails')}</div>
+          <div class="af2-chip" data-value="Without handrails">${t('noHandrails')}</div>
+          <div class="af2-chip" data-value="With backrests">${t('withBackrests')}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderSurfaceFields() {
+    const t = (key) => this.t(key);
+    return `
+      <div class="af2-subsection">
+        <div class="af2-subsection-title">${t('surfaceCondition')}</div>
+        <div class="af2-card-grid" data-field="surfaceQuality" data-type="single">
+          <div class="af2-select-card" data-value="Excellent - smooth and well maintained">
+            <span class="card-icon">✨</span>
+            <span class="card-label">${t('excellent')}</span>
+            <span class="card-desc">${t('smoothMaintained')}</span>
+          </div>
+          <div class="af2-select-card" data-value="Fair - minor disruptions, rough patches, bumps, cracks">
+            <span class="card-icon">👍</span>
+            <span class="card-label">${t('fair')}</span>
+            <span class="card-desc">${t('minorBumps')}</span>
+          </div>
+          <div class="af2-select-card" data-value="Poor - serious disruptions, protruding stones, large grooves">
+            <span class="card-icon">⚠️</span>
+            <span class="card-label">${t('poor')}</span>
+            <span class="card-desc">${t('roughTerrain')}</span>
+          </div>
+          <div class="af2-select-card" data-value="Vegetation blocks passage">
+            <span class="card-icon">🌿</span>
+            <span class="card-label">${t('overgrown')}</span>
+            <span class="card-desc">${t('blocked')}</span>
+          </div>
+        </div>
+      </div>
+      <div class="af2-subsection">
+        <div class="af2-subsection-title">${t('trailSlopes')}</div>
+        <div class="af2-card-grid cols-3" data-field="trailSlopes" data-type="single">
+          <div class="af2-select-card" data-value="No slopes to mild slopes (up to 5%)">
+            <span class="card-icon">➡️</span>
+            <span class="card-label">${t('flatMild')}</span>
+            <span class="card-desc">&lt; 5%</span>
+          </div>
+          <div class="af2-select-card" data-value="Moderate slopes - assistance recommended (5%-10%)">
+            <span class="card-icon">📐</span>
+            <span class="card-label">${t('moderateSlope')}</span>
+            <span class="card-desc">5-10%</span>
+          </div>
+          <div class="af2-select-card" data-value="Steep slopes - not accessible (over 10%)">
+            <span class="card-icon">⛰️</span>
+            <span class="card-label">${t('steepSlope')}</span>
+            <span class="card-desc">&gt; 10%</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderVisualFields() {
+    const t = (key) => this.t(key);
+    return `
+      <div class="af2-subsection">
+        <div class="af2-subsection-title">${t('visualFeatures')}</div>
+        <div class="af2-chip-grid" data-field="visualAdaptations" data-type="multi">
+          <div class="af2-chip" data-value="Raised/protruding borders">${t('raisedEdges')}</div>
+          <div class="af2-chip" data-value="Texture/tactile differences">${t('tactilePaving')}</div>
+          <div class="af2-chip" data-value="Color contrast differences">${t('colorContrastMarkers')}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderEnvironmentFields() {
+    const t = (key) => this.t(key);
+    return `
+      <div class="af2-subsection">
+        <div class="af2-subsection-title">${t('shadeLevel')}</div>
+        <div class="af2-card-grid cols-3" data-field="shadeCoverage" data-type="single">
+          <div class="af2-select-card" data-value="Plenty of shade">
+            <span class="card-icon">🌳</span>
+            <span class="card-label">${t('plentyShade')}</span>
+          </div>
+          <div class="af2-select-card" data-value="Intermittent shade">
+            <span class="card-icon">⛅</span>
+            <span class="card-label">${t('someShade')}</span>
+          </div>
+          <div class="af2-select-card" data-value="No shade">
+            <span class="card-icon">☀️</span>
+            <span class="card-label">${t('noShade')}</span>
+          </div>
+        </div>
+      </div>
+      <div class="af2-subsection">
+        <div class="af2-chip-grid" data-field="lighting" data-type="multi">
+          <div class="af2-chip" data-value="Trail is lit in darkness">💡 ${t('litAtNight')}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderSignageFields() {
+    const t = (key) => this.t(key);
+    return `
+      <div class="af2-chip-grid" data-field="signage" data-type="multi">
+        <div class="af2-chip" data-value="Route map available">🗺️ ${t('routeMap')}</div>
+        <div class="af2-chip" data-value="Clear directional signage">➡️ ${t('clearDirectionalSigns')}</div>
+        <div class="af2-chip" data-value="Simple language signage">📖 ${t('simpleLanguage')}</div>
+        <div class="af2-chip" data-value="Large, high-contrast accessible signage">🔤 ${t('highContrastSigns')}</div>
+        <div class="af2-chip" data-value="Audio explanation compatible with T-mode hearing devices">🔊 ${t('audioDescription')}</div>
+        <div class="af2-chip" data-value="QR code with site information available">📱 ${t('qrCodes')}</div>
+      </div>
+    `;
+  }
+
+  renderPicnicFields() {
+    const t = (key) => this.t(key);
+    return `
+      <div class="af2-subsection">
+        <div class="af2-chip-grid" data-field="picnicAreas" data-type="multi">
+          <div class="af2-chip" data-value="Available">🧺 ${t('picnicAreas')}</div>
+        </div>
+      </div>
+      <div class="af2-subsection">
+        <div class="af2-chip-grid" data-field="accessibleViewpoint" data-type="single">
+          <div class="af2-chip" data-value="Available">🏔️ ${t('viewpoint')}</div>
+        </div>
+      </div>
+      <div class="af2-subsection af2-grid-3col">
+        <div>
+          <div class="af2-subsection-title">${t('tablesInShade')}</div>
+          <div class="af2-number-input">
+            <button type="button" onclick="window.af2NumberStep('picnicShade', -1)">−</button>
+            <input type="number" id="af2-picnicShade" name="picnicShade" value="0" min="0">
+            <button type="button" onclick="window.af2NumberStep('picnicShade', 1)">+</button>
+          </div>
+        </div>
+        <div>
+          <div class="af2-subsection-title">${t('tablesInSun')}</div>
+          <div class="af2-number-input">
+            <button type="button" onclick="window.af2NumberStep('picnicSun', -1)">−</button>
+            <input type="number" id="af2-picnicSun" name="picnicSun" value="0" min="0">
+            <button type="button" onclick="window.af2NumberStep('picnicSun', 1)">+</button>
+          </div>
+        </div>
+        <div>
+          <div class="af2-subsection-title">${t('totalAreas')}</div>
+          <div class="af2-number-input af2-readonly">
+            <input type="number" id="af2-picnicCount" name="picnicCount" value="0" min="0" readonly>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  setupEventListeners() {
+    // Global functions
+    window.closeAccessibilityFormV2 = () => this.close();
+    window.af2Next = () => this.handleNext();
+    window.af2GoBack = () => this.goToPhase(1);
+    window.af2NumberStep = (field, delta) => this.numberStep(field, delta);
+    
+    const overlay = document.getElementById('af2-overlay');
+    if (!overlay) return;
+    
+    // Remove existing listeners by replacing the element (clean slate approach)
+    if (overlay._listenersAttached) {
+      // Clone and replace to remove all event listeners
+      const newOverlay = overlay.cloneNode(true);
+      overlay.parentNode.replaceChild(newOverlay, overlay);
+      // Update reference
+      const freshOverlay = document.getElementById('af2-overlay');
+      this._attachEventHandlers(freshOverlay);
+    } else {
+      this._attachEventHandlers(overlay);
+    }
+  }
+  
+  _attachEventHandlers(overlay) {
+    if (!overlay) return;
+    overlay._listenersAttached = true;
+    
+    // Single click handler for all interactions
+    overlay.addEventListener('click', (e) => {
+      // Close on background click
+      if (e.target === overlay) {
+        this.close();
+        return;
+      }
+      
+      // Card selections
+      const selectCard = e.target.closest('.af2-select-card');
+      if (selectCard) {
+        const grid = selectCard.closest('[data-field]');
+        if (grid) {
+          const type = grid.dataset.type;
+          if (type === 'single') {
+            grid.querySelectorAll('.af2-select-card').forEach(c => c.classList.remove('selected'));
+            selectCard.classList.add('selected');
+          } else {
+            selectCard.classList.toggle('selected');
+          }
+          this.updateCategoryStatus(selectCard);
+        }
+        return;
+      }
+      
+      // Chip selections
+      const chip = e.target.closest('.af2-chip');
+      if (chip) {
+        const grid = chip.closest('[data-field]');
+        if (grid) {
+          const type = grid.dataset.type;
+          if (type === 'single') {
+            grid.querySelectorAll('.af2-chip').forEach(c => c.classList.remove('selected'));
+            chip.classList.add('selected');
+          } else {
+            chip.classList.toggle('selected');
+          }
+          this.updateCategoryStatus(chip);
+        }
+        return;
+      }
+      
+      // Category card expand - IMPORTANT: check this AFTER card/chip selections
+      // to avoid conflicts with content inside categories
+      const catCard = e.target.closest('.af2-category-card');
+      if (catCard) {
+        // Don't toggle if clicking inside the expanded content area
+        if (e.target.closest('.af2-category-content')) {
+          return;
+        }
+        const wasExpanded = catCard.classList.contains('expanded');
+        // Collapse all other cards
+        overlay.querySelectorAll('.af2-category-card').forEach(c => c.classList.remove('expanded'));
+        // Toggle this card
+        if (!wasExpanded) {
+          catCard.classList.add('expanded');
+          // Scroll the card into view
+          setTimeout(() => {
+            catCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }, 100);
+        }
+      }
+    });
+    
+    // Difficulty slider
+    const slider = overlay.querySelector('#af2-difficulty');
+    if (slider) {
+      slider.addEventListener('input', (e) => {
+        const labels = overlay.querySelectorAll('.af2-slider-label');
+        labels.forEach(l => l.classList.remove('active'));
+        const activeLabel = overlay.querySelector(`.af2-slider-label[data-level="${e.target.value}"]`);
+        if (activeLabel) activeLabel.classList.add('active');
+      });
+    }
+  }
+
+  numberStep(field, delta) {
+    const input = document.getElementById(`af2-${field}`);
+    if (input) {
+      const newVal = Math.max(0, parseInt(input.value || 0) + delta);
+      input.value = newVal;
+      this.updateCategoryStatus(input);
+      
+      // Auto-calculate picnic total when shade or sun changes
+      if (field === 'picnicShade' || field === 'picnicSun') {
+        this.updatePicnicTotal();
+      }
+      
+      // Validate picnic total doesn't go below shade+sun
+      if (field === 'picnicCount') {
+        const shade = parseInt(document.getElementById('af2-picnicShade')?.value || 0);
+        const sun = parseInt(document.getElementById('af2-picnicSun')?.value || 0);
+        const total = shade + sun;
+        if (newVal < total) {
+          input.value = total;
+        }
+      }
+    }
+  }
+  
+  updatePicnicTotal() {
+    const shadeInput = document.getElementById('af2-picnicShade');
+    const sunInput = document.getElementById('af2-picnicSun');
+    const totalInput = document.getElementById('af2-picnicCount');
+    
+    if (shadeInput && sunInput && totalInput) {
+      const shade = parseInt(shadeInput.value || 0);
+      const sun = parseInt(sunInput.value || 0);
+      totalInput.value = shade + sun;
+    }
+  }
+
+  updateCategoryStatus(element) {
+    const catCard = element.closest('.af2-category-card');
+    if (catCard) {
+      // Check if any selections made in this category
+      const hasSelections = catCard.querySelector('.selected') || 
+                          Array.from(catCard.querySelectorAll('input[type="number"]')).some(i => parseInt(i.value) > 0);
+      catCard.classList.toggle('has-data', hasSelections);
+    }
+  }
+
+  handleNext() {
+    if (this.currentPhase === 1) {
+      // Validate required fields
+      const trailName = document.getElementById('af2-trailName')?.value?.trim();
+      const location = document.getElementById('af2-location')?.value?.trim();
+      
+      if (!trailName || !location) {
+        toast.error('Please fill in Trail Name and Location');
+        return;
+      }
+      
+      // Ask if they want to add details or save now
+      this.showSaveOptions();
+    } else {
+      this.saveForm();
+    }
+  }
+
+  showSaveOptions() {
+    const t = (key) => this.t(key);
+    const footer = document.querySelector('.af2-footer');
+    footer.innerHTML = `
+      <button class="af2-btn af2-btn-text" onclick="window.closeAccessibilityFormV2()">${t('cancel')}</button>
+      <button class="af2-btn af2-btn-secondary" onclick="window.af2GoToPhase2()">📋 ${t('addMoreDetails')}</button>
+      <button class="af2-btn af2-btn-primary" onclick="window.af2SaveNow()">✓ ${t('saveNow')}</button>
+    `;
+    
+    window.af2GoToPhase2 = () => {
+      this.goToPhase(2);
+      footer.innerHTML = `
+        <button class="af2-btn af2-btn-text" onclick="window.closeAccessibilityFormV2()">${t('cancel')}</button>
+        <button class="af2-btn af2-btn-secondary" onclick="window.af2GoBack()">← ${t('goBack')}</button>
+        <button class="af2-btn af2-btn-primary" onclick="window.af2Next()">${t('saveCompleteSurvey')} ✓</button>
+      `;
+    };
+    
+    window.af2SaveNow = () => this.saveForm();
+  }
+
+  goToPhase(phase) {
+    this.currentPhase = phase;
+    
+    // Update progress
+    document.querySelectorAll('.af2-progress-step').forEach(step => {
+      const stepNum = parseInt(step.dataset.step);
+      step.classList.remove('active', 'completed');
+      if (stepNum === phase) {
+        step.classList.add('active');
+      } else if (stepNum < phase) {
+        step.classList.add('completed');
+      }
+    });
+    
+    // Show correct phase
+    document.querySelectorAll('.af2-phase').forEach(p => {
+      p.classList.remove('active');
+      if (parseInt(p.dataset.phase) === phase) {
+        p.classList.add('active');
+      }
+    });
+    
+    // Update button
+    const backBtn = document.getElementById('af2-back-btn');
+    if (backBtn) {
+      backBtn.style.display = phase > 1 ? 'block' : 'none';
+    }
+    
+    // Scroll to top
+    document.querySelector('.af2-body')?.scrollTo(0, 0);
+  }
+
+  collectFormData() {
+    const data = {};
+    const overlay = document.getElementById('af2-overlay');
+    
+    // Text inputs
+    overlay.querySelectorAll('input[type="text"], input[type="number"], select, textarea').forEach(input => {
+      if (input.name && input.value) {
+        data[input.name] = input.value;
+      }
+    });
+    
+    // Single selections (cards and chips)
+    overlay.querySelectorAll('[data-field][data-type="single"]').forEach(grid => {
+      const selected = grid.querySelector('.selected');
+      if (selected) {
+        data[grid.dataset.field] = selected.dataset.value;
+      }
+    });
+    
+    // Multi selections
+    overlay.querySelectorAll('[data-field][data-type="multi"]').forEach(grid => {
+      const selected = grid.querySelectorAll('.selected');
+      if (selected.length > 0) {
+        data[grid.dataset.field] = Array.from(selected).map(s => s.dataset.value);
+      }
+    });
+    
+    // Difficulty slider
+    const slider = document.getElementById('af2-difficulty');
+    if (slider) {
+      const levels = ['Easy', 'Moderate', 'Challenging'];
+      data.difficulty = levels[parseInt(slider.value) - 1];
+    }
+    
+    return data;
+  }
+
+  saveForm() {
+    const data = this.collectFormData();
+    console.log('📋 Survey data collected:', data);
+    
+    // Save to localStorage for compatibility with existing system
+    localStorage.setItem('accessibilityData', JSON.stringify(data));
+    
+    // Track survey completion
+    if (userService.isInitialized) {
+      userService.trackSurveyCompleted();
+    }
+    
+    toast.success('✅ Accessibility survey saved!');
+    
+    if (this.currentCallback) {
+      this._callbackCalled = true; // Mark as called so close() doesn't call again
+      this.currentCallback(data);
+    }
+    
+    this.close();
+  }
+
+  open(callback) {
+    this.currentCallback = callback;
+    this._callbackCalled = false; // Reset flag
+    this.currentPhase = 1;
+    
+    // Refresh language from localStorage before opening
+    this.lang = localStorage.getItem('accessNature_language') || 'en';
+    const t = (key) => this.t(key);
+    
+    // Load user's mobility profile for pre-filling and category prioritization
+    this.loadMobilityProfile();
+    
+    // Re-render form to ensure correct language
+    this.loadFormHTML();
+    this.setupEventListeners();
+    
+    const overlay = document.getElementById('af2-overlay');
+    if (overlay) {
+      overlay.classList.add('open');
+      this.isOpen = true;
+      
+      // Prevent pull-to-refresh while form is open
+      document.body.classList.add('modal-open');
+      
+      // Reset form first
+      this.goToPhase(1);
+      overlay.querySelectorAll('input, select, textarea').forEach(i => {
+        if (i.type === 'range') {
+          i.value = 1;
+        } else if (i.type === 'number') {
+          i.value = 0;
+        } else {
+          i.value = '';
+        }
+      });
+      overlay.querySelectorAll('.selected').forEach(s => s.classList.remove('selected'));
+      overlay.querySelectorAll('.has-data').forEach(c => c.classList.remove('has-data'));
+      
+      // Show mobility profile indicator if set
+      this.showMobilityProfileIndicator();
+      
+      // Highlight priority categories based on mobility profile
+      this.highlightPriorityCategories();
+      
+      // Then prefill from saved data
+      this.prefillForm();
+      
+      // Reset footer with translated buttons
+      const footer = document.querySelector('.af2-footer');
+      footer.innerHTML = `
+        <button class="af2-btn af2-btn-text" onclick="window.closeAccessibilityFormV2()">${t('cancel')}</button>
+        <button class="af2-btn af2-btn-secondary" id="af2-back-btn" style="display:none" onclick="window.af2GoBack()">← ${t('goBack')}</button>
+        <button class="af2-btn af2-btn-primary" id="af2-next-btn" onclick="window.af2Next()">${t('saveNow')} ✓</button>
+      `;
+    }
+  }
+
+  /**
+   * Load user's mobility profile
+   */
+  loadMobilityProfile() {
+    const profileId = userService.getMobilityProfile();
+    if (profileId) {
+      this.userMobilityProfile = getProfile(profileId);
+      console.log('♿ Loaded mobility profile:', this.userMobilityProfile?.name);
+    } else {
+      this.userMobilityProfile = null;
+    }
+  }
+
+  /**
+   * Show mobility profile indicator in form header
+   */
+  showMobilityProfileIndicator() {
+    const header = document.querySelector('.af2-header');
+    if (!header) return;
+
+    // Remove existing indicator
+    const existing = header.querySelector('.af2-profile-indicator');
+    if (existing) existing.remove();
+
+    if (this.userMobilityProfile) {
+      const indicator = document.createElement('div');
+      indicator.className = 'af2-profile-indicator';
+      indicator.innerHTML = `
+        <span class="profile-icon">${this.userMobilityProfile.icon}</span>
+        <span class="profile-text">Documenting for: ${this.userMobilityProfile.name}</span>
+      `;
+      indicator.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 12px;
+        padding: 8px 12px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 8px;
+        font-size: 0.85rem;
+      `;
+      header.appendChild(indicator);
+    }
+  }
+
+  /**
+   * Highlight priority categories based on mobility profile
+   */
+  highlightPriorityCategories() {
+    if (!this.userMobilityProfile) return;
+
+    const priorityCategories = this.userMobilityProfile.formPrefills?.priorityCategories || [];
+    
+    // Add visual highlighting to priority categories in Phase 2
+    priorityCategories.forEach(categoryId => {
+      const card = document.querySelector(`.af2-category-card[data-category="${categoryId}"]`);
+      if (card) {
+        card.classList.add('priority-category');
+        
+        // Add priority badge if not exists
+        if (!card.querySelector('.priority-badge')) {
+          const badge = document.createElement('span');
+          badge.className = 'priority-badge';
+          badge.textContent = '★ Recommended';
+          badge.style.cssText = `
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+          `;
+          card.style.position = 'relative';
+          card.appendChild(badge);
+        }
+      }
+    });
+
+    // Reorder categories to show priority ones first
+    this.reorderCategories(priorityCategories);
+  }
+
+  /**
+   * Reorder category cards to show priority ones first
+   * @param {string[]} priorityCategories 
+   */
+  reorderCategories(priorityCategories) {
+    const grid = document.querySelector('.af2-category-grid');
+    if (!grid || priorityCategories.length === 0) return;
+
+    // Get all category cards
+    const cards = Array.from(grid.querySelectorAll('.af2-category-card'));
+    
+    // Sort: priority categories first, then others
+    cards.sort((a, b) => {
+      const aPriority = priorityCategories.indexOf(a.dataset.category);
+      const bPriority = priorityCategories.indexOf(b.dataset.category);
+      
+      // Both are priority - sort by priority order
+      if (aPriority !== -1 && bPriority !== -1) {
+        return aPriority - bPriority;
+      }
+      // Only a is priority
+      if (aPriority !== -1) return -1;
+      // Only b is priority
+      if (bPriority !== -1) return 1;
+      // Neither is priority - keep original order
+      return 0;
+    });
+
+    // Re-append in new order
+    cards.forEach(card => grid.appendChild(card));
+  }
+
+  close() {
+    const overlay = document.getElementById('af2-overlay');
+    if (overlay) {
+      overlay.classList.remove('open');
+      this.isOpen = false;
+      
+      // Re-enable pull-to-refresh
+      document.body.classList.remove('modal-open');
+      
+      // Call callback with null to indicate form was closed without submit
+      // (submit handler calls it with data before closing)
+      if (this.currentCallback && !this._callbackCalled) {
+        this.currentCallback(null);
+      }
+      this._callbackCalled = false;
+      this.currentCallback = null;
+    }
+  }
+
+  /**
+   * Get current form data (for compatibility with existing code)
+   */
+  getFormData() {
+    return this.collectFormData();
+  }
+
+  /**
+   * Prefill form from localStorage (called on open)
+   */
+  prefillForm() {
+    try {
+      const savedData = localStorage.getItem('accessibilityData');
+      if (!savedData) return;
+
+      const data = JSON.parse(savedData);
+      const overlay = document.getElementById('af2-overlay');
+      if (!overlay) return;
+
+      // Prefill text inputs
+      Object.entries(data).forEach(([key, value]) => {
+        // Text/number inputs
+        const input = overlay.querySelector(`#af2-${key}, [name="${key}"]`);
+        if (input && (input.tagName === 'INPUT' || input.tagName === 'SELECT' || input.tagName === 'TEXTAREA')) {
+          input.value = value;
+        }
+
+        // Single select cards/chips
+        const singleGrid = overlay.querySelector(`[data-field="${key}"][data-type="single"]`);
+        if (singleGrid && !Array.isArray(value)) {
+          const item = singleGrid.querySelector(`[data-value="${value}"]`);
+          if (item) {
+            singleGrid.querySelectorAll('.af2-select-card, .af2-chip').forEach(i => i.classList.remove('selected'));
+            item.classList.add('selected');
+          }
+        }
+
+        // Multi select chips
+        const multiGrid = overlay.querySelector(`[data-field="${key}"][data-type="multi"]`);
+        if (multiGrid && Array.isArray(value)) {
+          value.forEach(val => {
+            const item = multiGrid.querySelector(`[data-value="${val}"]`);
+            if (item) item.classList.add('selected');
+          });
+        }
+      });
+
+      // Difficulty slider
+      if (data.difficulty) {
+        const slider = document.getElementById('af2-difficulty');
+        if (slider) {
+          const levels = { 'Easy': 1, 'Moderate': 2, 'Challenging': 3 };
+          slider.value = levels[data.difficulty] || 1;
+          // Update label
+          overlay.querySelectorAll('.af2-slider-label').forEach(l => l.classList.remove('active'));
+          const activeLabel = overlay.querySelector(`.af2-slider-label[data-level="${slider.value}"]`);
+          if (activeLabel) activeLabel.classList.add('active');
+        }
+      }
+
+      console.log('📋 Form prefilled from saved data');
+    } catch (error) {
+      console.error('Failed to prefill form:', error);
+    }
+  }
+}
+
+// Create singleton instance
+const accessibilityFormV2Quick = new AccessibilityFormV2Quick();
+
+export { accessibilityFormV2Quick };
+
+console.log('📋 Accessibility Form V2 (Quick) loaded');
