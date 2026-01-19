@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accessible - Making Paths Clear For Everyone</title>
+  
+  <!-- Preconnect to external origins for faster loading -->
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin>
+  
+  <!-- CRITICAL CSS - Nav styles inline for immediate render -->
+  <style>
+    /* WCAG Accessibility Styles */
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Focus styles for all interactive elements */
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    [tabindex]:focus-visible {
+      outline: 3px solid #2c5530;
+      outline-offset: 2px;
+    }
+
+    /* Skip to main content link */
+    .skip-link {
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: #2c5530;
+      color: white;
+      padding: 8px 16px;
+      z-index: 100000;
+      text-decoration: none;
+      font-weight: 500;
+      border-radius: 0 0 4px 0;
+      transform: translateY(-100%);
+      transition: transform 0.2s ease;
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    .top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      z-index: 9999;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: #fff;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+    .menu-toggle {
+      display: none;
+    }
+    .nav-menu {
+      display: none;
+    }
+    
+    /* Desktop: show nav-menu, hide hamburger */
+    @media (min-width: 769px) {
+      .top-nav {
+        padding-right: 230px; /* Space for top toolbar */
+        justify-content: flex-start !important; /* Override unified-nav.css space-between */
+      }
+      .top-nav::after {
+        display: none !important; /* Remove pseudo-element spacer from unified-nav.css */
+      }
+      .nav-brand {
+        margin-right: 0 !important; /* Override unified-nav.css margin-right: auto */
+      }
+      .menu-toggle { display: none !important; }
+      .nav-menu {
+        display: flex !important;
+        position: static;
+        background: none;
+        box-shadow: none;
+        padding: 0;
+        gap: 4px;
+        align-items: center;
+        flex-shrink: 0;
+        margin-left: auto; /* Push nav-menu to right, next to toolbar */
+      }
+      /* Hide emoji icons on desktop to save space */
+      .nav-menu .nav-icon-emoji {
+        display: none;
+      }
+      .nav-menu .nav-link,
+      .nav-menu #profileNavLink {
+        padding: 6px 10px;
+        border-radius: 6px;
+        color: #fff;
+        text-decoration: none;
+        font-size: 0.8rem;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        line-height: 1;
+        height: 32px;
+        box-sizing: border-box;
+        vertical-align: middle;
+      }
+      /* Hide mobility profile on desktop - MUST come after .nav-link rule */
+      .nav-menu .nav-mobility-profile {
+        display: none !important;
+      }
+      .nav-menu .nav-link:hover {
+        background: rgba(255,255,255,0.15);
+      }
+      .nav-menu .nav-link.active {
+        background: #667eea;
+        color: white;
+      }
+      .nav-menu .nav-auth {
+        margin-left: 8px;
+        display: flex;
+        align-items: center;
+      }
+      .nav-menu .nav-auth .btn {
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: none;
+        background: #667eea;
+        color: white;
+        cursor: pointer;
+        font-size: 0.8rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        height: 32px;
+        box-sizing: border-box;
+      }
+      .nav-menu .nav-auth .btn:hover {
+        background: #5a6fd6;
+      }
+    }
+    
+    /* Mobile: hide nav-menu */
+    @media (max-width: 768px) {
+      .menu-toggle { display: none !important; }
+      .nav-menu { display: none !important; }
+    }
+    
+    /* Hamburger icon styles */
+    .hamburger-icon {
+      width: 20px;
+      height: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .hamburger-icon span {
+      display: block;
+      width: 20px;
+      height: 2px;
+      background: #fff;
+      border-radius: 2px;
+      transition: all 0.3s ease;
+    }
+    .menu-toggle.active .hamburger-icon span:nth-child(1) {
+      transform: rotate(45deg) translate(4px, 4px);
+    }
+    .menu-toggle.active .hamburger-icon span:nth-child(2) {
+      opacity: 0;
+    }
+    .menu-toggle.active .hamburger-icon span:nth-child(3) {
+      transform: rotate(-45deg) translate(4px, -4px);
+    }
+    
+    /* High contrast toggle - circular button style */
+    .high-contrast-toggle {
+      position: fixed;
+      bottom: calc(var(--bottom-nav-height, 64px) + 16px + env(safe-area-inset-bottom, 0));
+      left: 20px;
+      z-index: 9999;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      background: rgba(26, 26, 26, 0.95);
+      color: #fff;
+      border: 1px solid #333;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    
+    .high-contrast-toggle .toggle-text {
+      display: none;
+    }
+    
+    .high-contrast-toggle .toggle-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* Force LTR for email and password inputs even in RTL mode */
+    input[type="email"],
+    input[type="password"] {
+      direction: ltr !important;
+      text-align: left !important;
+    }
+  </style>
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#2c5530">
+  <meta name="description" content="Making outdoor spaces accessible for everyone. Document trails, report barriers, and discover accessible routes.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Accessible">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg">
+  <link rel="apple-touch-icon" href="assets/icons/icon.svg">
+  
+  <!-- External CSS - normal blocking load -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
+  
+  <!-- App CSS -->
+  <link rel="stylesheet" href="src/css/landing.css">
+  <link rel="stylesheet" href="src/css/auth.css">
+  <link rel="stylesheet" href="src/css/high-contrast.css">
+  <link rel="stylesheet" href="src/css/ui-utilities.css">
+  <link rel="stylesheet" href="src/css/pwa.css">
+  <link rel="stylesheet" href="src/css/unified-nav.css">
+  <link rel="stylesheet" href="src/css/mobile-responsive.css">
+  <link rel="stylesheet" href="src/css/global-nav.css">
+  <link rel="stylesheet" href="src/css/error-messages.css">
+  <link rel="stylesheet" href="src/css/rtl.css">
+
+  <!-- CRITICAL: Apply saved preferences immediately to prevent flash -->
+  <script>
+    (function() {
+      // Apply high contrast immediately if saved
+      try {
+        var prefs = JSON.parse(localStorage.getItem('accessNature_displayPrefs') || '{}');
+        if (prefs.highContrast) {
+          document.documentElement.classList.add('high-contrast');
+        }
+        if (prefs.reducedMotion) {
+          document.documentElement.classList.add('reduced-motion');
+        }
+      } catch(e) {}
+      
+      // Debug: Mark that critical script ran
+      document.documentElement.dataset.criticalScriptRan = 'true';
+    })();
+  </script>
+
+  <style>
+  /* Non-critical nav styles - can load from CSS */
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #fff;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .nav-auth-indicator .auth-status.signed-in {
+    background: #166534;
+    color: #dcfce7;
+  }
+  /* Menu toggle (hamburger) for black background */
+  .menu-toggle {
+    color: #fff;
+  }
+  .menu-toggle svg {
+    fill: #fff;
+    stroke: #fff;
+  }
+  
+  /* DESKTOP NAV OVERRIDES - Must be after unified-nav.css loads */
+  @media (min-width: 769px) {
+    .top-nav {
+      padding-right: 230px !important;
+      justify-content: flex-start !important;
+    }
+    .top-nav::after {
+      display: none !important;
+    }
+    .nav-brand {
+      margin-right: 0 !important;
+    }
+    .nav-menu {
+      margin-left: auto !important;
+    }
+  }
+  
+  /* nav-menu display is handled by critical CSS above */
+  .nav-menu .nav-link {
+    padding: 8px 16px;
+    color: #4b5563;
+    text-decoration: none;
+    border-radius: 8px;
+  }
+  .nav-menu .nav-link:hover { background: #f3f4f6; }
+  .nav-menu .nav-link.active { background: #667eea; color: white; }
+  .nav-menu .nav-auth .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background: #667eea;
+    color: white;
+    cursor: pointer;
+  }
+  /* menu-toggle display is handled by critical CSS above */
+  .auth-status-landing { display: none !important; }
+  
+  @media (max-width: 768px) {
+    /* Keep nav-brand left-aligned on mobile */
+    .top-nav {
+      justify-content: flex-start !important;
+    }
+    .top-nav::after {
+      display: none !important;
+    }
+    .nav-brand {
+      margin-right: 0 !important;
+    }
+    
+    .nav-menu .nav-auth { width: 100%; margin-top: 8px; }
+    .nav-menu .nav-auth .btn { width: 100%; padding: 12px; font-size: 0.9rem; }
+    
+    /* Ensure nav elements always visible on mobile */
+    .nav-auth-indicator { 
+      display: flex !important;
+      flex-shrink: 0;
+      min-width: auto;
+      font-size: 0.7rem;
+    }
+    .nav-auth-indicator .auth-status {
+      padding: 3px 8px;
+    }
+  }
+  
+  /* Auth modal must be above everything */
+  .auth-modal {
+    z-index: 20000 !important;
+  }
+  .auth-modal-backdrop {
+    z-index: 19999 !important;
+  }
+  .auth-modal-container {
+    z-index: 20001 !important;
+  }
+  
+  /* Loading indicators for stats */
+  .stat-loading {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  
+  .stat-big.stat-loading,
+  .stat-number.stat-loading {
+    width: 32px;
+    height: 32px;
+    border-width: 4px;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  /* Featured trails loading skeleton */
+  .featured-loading {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    padding: 40px 0;
+  }
+  
+  .skeleton-card {
+    width: 280px;
+    height: 200px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 12px;
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+</style>
+
+<!-- Critical: Apply preferences immediately before render -->
+<script>
+(function() {
+  // Apply high contrast immediately from localStorage
+  try {
+    const prefs = JSON.parse(localStorage.getItem('accessNature_displayPrefs') || '{}');
+    if (prefs.highContrast) {
+      document.documentElement.classList.add('high-contrast');
+    }
+  } catch(e) {}
+})();
+</script>
+
+<!-- Analytics & Error Monitoring -->
+<script src="src/utils/monitoring.js" defer></script>
+</head>
+<body>
+<!-- Skip to main content link for keyboard users -->
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<!-- Navigation -->
+<nav class="top-nav" role="navigation" aria-label="Main navigation">
+  <a href="index.html" class="nav-brand">♿ Accessible</a>
+  <button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">
+    <span class="hamburger-icon" aria-hidden="true">
+      <span></span>
+      <span></span>
+      <span></span>
+    </span>
+  </button>
+  <div class="nav-menu" id="navMenu" role="menu">
+    <a href="index.html" class="nav-link active" role="menuitem"><span class="nav-icon-emoji" aria-hidden="true">🏠 </span>Home</a>
+    <a href="tracker.html" class="nav-link" role="menuitem"><span class="nav-icon-emoji" aria-hidden="true">🗺️ </span>Track</a>
+    <a href="reports.html" class="nav-link" role="menuitem"><span class="nav-icon-emoji" aria-hidden="true">📋 </span>Reports</a>
+    <a href="profile.html" class="nav-link" id="profileNavLink" style="display: none;" role="menuitem"><span class="nav-icon-emoji" aria-hidden="true">👤 </span>Profile</a>
+    <button class="nav-link nav-mobility-profile" onclick="window.mobilityProfileUI?.open()" style="background: none; border: none; cursor: pointer; text-align: left;" role="menuitem" aria-label="Open mobility profile settings">
+      <span class="nav-icon-emoji" aria-hidden="true">♿ </span>Mobility Profile
+    </button>
+    <div class="nav-auth">
+      <button id="navAuthBtn" class="btn" aria-label="Sign in to your account">Sign In</button>
+    </div>
+  </div>
+</nav>
+
+<!-- High Contrast Toggle -->
+<button id="highContrastToggle" class="high-contrast-toggle" aria-label="Toggle high contrast mode" title="Toggle high contrast mode" aria-pressed="false">
+  <span class="toggle-icon" aria-hidden="true">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18V4c4.41 0 8 3.59 8 8s-3.59 8-8 8z"/>
+    </svg>
+  </span>
+  <span class="toggle-text">High Contrast</span>
+</button>
+
+  <!-- Page Header -->
+  <main id="main-content" role="main">
+  <div class="page-header">
+    <p class="tagline" data-i18n="common.tagline">Making outdoor spaces accessible for everyone</p>
+  </div>
+
+  <!-- Quick Actions Grid -->
+  <section class="quick-actions-section" aria-label="Quick actions">
+    <div class="quick-actions-grid">
+      <button class="quick-action-card" onclick="openTracker()" aria-label="Track a new trail" data-i18n-aria="index.trackTrail">
+        <span class="qa-icon">📍</span>
+        <span class="qa-title" data-i18n="index.trackTrail">Track Trail</span>
+        <span class="qa-subtitle" data-i18n="index.trackTrailDesc">Record GPS route</span>
+      </button>
+      
+      <button class="quick-action-card" onclick="window.location.href='reports.html?action=new'" aria-label="Report an accessibility issue" data-i18n-aria="index.reportIssue">
+        <span class="qa-icon">⚠️</span>
+        <span class="qa-title" data-i18n="index.reportIssue">Report Issue</span>
+        <span class="qa-subtitle" data-i18n="index.reportIssueDesc">Flag a barrier</span>
+      </button>
+      
+      <button class="quick-action-card" onclick="openTrailBrowser()" aria-label="Find accessible trails" data-i18n-aria="index.findTrails">
+        <span class="qa-icon">🔍</span>
+        <span class="qa-title" data-i18n="index.findTrails">Find Trails</span>
+        <span class="qa-subtitle" data-i18n="index.findTrailsDesc">Browse guides</span>
+      </button>
+      
+      <button class="quick-action-card" onclick="window.location.href='reports.html'" aria-label="View accessibility reports" data-i18n-aria="index.viewReports">
+        <span class="qa-icon">📋</span>
+        <span class="qa-title" data-i18n="index.viewReports">View Reports</span>
+        <span class="qa-subtitle" data-i18n="index.viewReportsDesc">See issues</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Community Pulse Section -->
+  <section class="community-pulse-section" aria-label="Community statistics">
+    <div class="section-container">
+      <h2 class="section-title">📊 <span data-i18n="index.communityPulse">Community Pulse</span></h2>
+      <div class="pulse-stats">
+        <div class="pulse-stat">
+          <span class="pulse-number" id="publicGuides">0</span>
+          <span class="pulse-label" data-i18n="index.trailsMapped">Trails Mapped</span>
+        </div>
+        <div class="pulse-stat">
+          <span class="pulse-number" id="totalKm">0</span>
+          <span class="pulse-label" data-i18n="index.kmDocumented">km Documented</span>
+        </div>
+        <div class="pulse-stat">
+          <span class="pulse-number" id="accessibleTrails">0</span>
+          <span class="pulse-label" data-i18n="index.fullyAccessible">Fully Accessible</span>
+        </div>
+        <div class="pulse-stat">
+          <span class="pulse-number" id="totalUsers">0</span>
+          <span class="pulse-label" data-i18n="index.contributors">Contributors</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- My Trails Section (logged-in users only) -->
+  <section class="my-trails-section" id="myTrailsSection" style="display: none;" aria-label="My trail guides">
+    <div class="section-container">
+      <div class="my-trails-header">
+        <h2 class="section-title">📍 <span data-i18n="index.myTrailGuides">My Trail Guides</span></h2>
+        <a href="tracker.html" class="new-trail-btn" data-i18n="index.newTrail">+ New Trail</a>
+      </div>
+      <div class="my-trails-stats" id="myTrailsStats">
+        <!-- Stats populated by JS -->
+      </div>
+      <div class="my-trails-actions">
+        <button class="view-guides-btn" id="viewMyGuidesBtn" onclick="window.landingController?.showMyTrailGuides()">
+          📚 <span data-i18n="index.viewMyGuides">View My Trail Guides</span>
+        </button>
+      </div>
+      <div class="my-trails-empty" id="myTrailsEmpty" style="display: none;">
+        <p>🥾 <span data-i18n="index.noGuidesYet">You haven't created any trail guides yet!</span></p>
+        <a href="tracker.html" class="start-trail-btn" data-i18n="index.startFirstTrail">Start Your First Trail</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Community Challenges Section -->
+  <section class="challenges-section" aria-label="Community challenges">
+    <div class="section-container">
+      <div id="communityChallengesPanel">
+        <!-- Challenges will be dynamically inserted here -->
+      </div>
+    </div>
+  </section>
+
+  <!-- What's New Section -->
+  <section class="whats-new-section" aria-label="Latest announcements">
+    <div class="section-container">
+      <h2 class="section-title">📰 <span data-i18n="index.whatsNew">What's New</span></h2>
+      <div id="announcementsFeed" class="announcements-feed">
+        <p class="feed-loading" data-i18n="index.loadingAnnouncements">Loading announcements...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Trails -->
+  <section class="featured-section" aria-label="Featured accessible trails">
+    <div class="section-container">
+      <h2 class="section-title">⭐ <span data-i18n="index.featuredTrails">Featured Accessible Trails</span></h2>
+      
+      <!-- Trail Search & Filters -->
+      <div id="trailSearchContainer"></div>
+      
+      <!-- Results Header -->
+      <div id="trailResultsHeader"></div>
+      
+      <div id="featuredTrails" class="featured-grid">
+        <!-- Dynamically populated -->
+      </div>
+      <button class="load-more-btn" id="loadMoreBtn" onclick="loadMoreFeatured()" data-i18n="index.loadMore">Load More Trails</button>
+    </div>
+  </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer-section">
+    <div class="footer-container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <h4>♿ <span data-i18n="common.appName">Accessible</span></h4>
+          <p data-i18n="common.tagline">Making outdoor spaces accessible for everyone</p>
+        </div>
+        <div class="footer-links">
+          <a href="#" onclick="showAbout(); return false;" data-i18n="footer.about">About</a>
+          <a href="privacy.html" data-i18n="footer.privacy">Privacy Policy</a>
+          <a href="terms.html" data-i18n="footer.terms">Terms of Service</a>
+          <a href="#" onclick="showContact(); return false;" data-i18n="footer.contact">Contact</a>
+          <a href="beta-guide.html" style="color: #7c3aed;">📝 <span data-i18n="footer.betaGuide">Beta Guide</span></a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2024 Accessible. <span data-i18n="footer.copyright">Making trails accessible for all abilities.</span></p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Trail Browser Modal -->
+  <div id="trailBrowserModal" class="modal hidden">
+    <div class="modal-backdrop" onclick="closeTrailBrowser()"></div>
+    <div class="modal-container trail-browser">
+      <div class="modal-header">
+        <h2 data-i18n="trailBrowser.title">🔍 Browse Accessible Trails</h2>
+        <button class="modal-close" onclick="closeTrailBrowser()" aria-label="Close">✕</button>
+      </div>
+      
+      <div class="modal-content">
+        <!-- Search and Filters -->
+        <div class="search-section" role="search" aria-label="Trail search">
+          <div class="search-bar">
+            <label for="trailSearch" class="visually-hidden" data-i18n="trailBrowser.searchLabel">Search trail names and locations</label>
+            <input type="text" id="trailSearch" data-i18n-placeholder="trailBrowser.searchPlaceholder" placeholder="Search trail names, locations..." maxlength="100" aria-label="Search trail names and locations">
+            <button onclick="searchTrails()" class="search-button" aria-label="Search trails" data-i18n="common.search">🔍 Search</button>
+          </div>
+          
+          <div class="filters-section">
+            <h4 id="filterHeading" data-i18n="trailBrowser.filterByAccessibility">🎯 Filter by Accessibility</h4>
+            <div class="filter-grid" role="group" aria-labelledby="filterHeading">
+              <label for="wheelchairFilter" class="visually-hidden" data-i18n="trailBrowser.wheelchairAccess">Filter by wheelchair access</label>
+              <select id="wheelchairFilter" aria-label="Filter by wheelchair access">
+                <option value="" data-i18n="trailBrowser.wheelchairAccess">Wheelchair Access</option>
+                <option value="Fully Accessible" data-i18n="index.fullyAccessible">Fully Accessible</option>
+                <option value="Partially Accessible" data-i18n="trailBrowser.partiallyAccessible">Partially Accessible</option>
+                <option value="Not Accessible" data-i18n="trailBrowser.notAccessible">Not Accessible</option>
+              </select>
+              
+              <label for="difficultyFilter" class="visually-hidden" data-i18n="trailBrowser.difficultyLevel">Filter by difficulty level</label>
+              <select id="difficultyFilter" aria-label="Filter by difficulty level">
+                <option value="" data-i18n="trailBrowser.difficultyLevel">Difficulty Level</option>
+                <option value="Easy" data-i18n="trailBrowser.easy">Easy</option>
+                <option value="Moderate" data-i18n="trailBrowser.moderate">Moderate</option>
+                <option value="Difficult" data-i18n="trailBrowser.difficult">Difficult</option>
+              </select>
+              
+              <label for="distanceFilter" class="visually-hidden" data-i18n="trailBrowser.distance">Filter by distance</label>
+              <select id="distanceFilter" aria-label="Filter by distance">
+                <option value="" data-i18n="trailBrowser.distance">Distance</option>
+                <option value="0-2">0-2 km</option>
+                <option value="2-5">2-5 km</option>
+                <option value="5-10">5-10 km</option>
+                <option value="10+">10+ km</option>
+              </select>
+              
+              <button onclick="applyFilters()" class="filter-apply-btn" aria-label="Apply selected filters" data-i18n="trailBrowser.applyFilters">Apply Filters</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Results -->
+        <div class="results-section" aria-live="polite">
+          <div class="results-header">
+            <h4 data-i18n="trailBrowser.trailResults">📍 Trail Results</h4>
+            <span id="resultsCount" aria-live="polite" data-i18n="trailBrowser.noTrailsFound">0 trails found</span>
+          </div>
+          
+          <div id="trailResults" class="trail-results-grid" role="list" aria-label="Trail search results">
+            <!-- Dynamically populated -->
+          </div>
+          
+          <div class="results-pagination">
+            <button id="loadMoreBtn" onclick="loadMoreResults()" class="load-more-btn hidden" data-i18n="index.loadMore">
+              Load More Trails
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Track Trail Modal -->
+  <div id="trackTrailModal" class="modal hidden">
+    <div class="modal-backdrop" onclick="closeTrackModal()"></div>
+    <div class="modal-container track-modal" id="trackModalContainer">
+      <div class="modal-header">
+        <h2 data-i18n="trackModal.title">📍 Map a New Trail</h2>
+        <button class="modal-close" onclick="closeTrackModal()" aria-label="Close">✕</button>
+      </div>
+      
+      <div class="modal-content">
+        <p class="modal-description" data-i18n="trackModal.description">Use GPS tracking to document accessible routes. Record accessibility features, take photos, and create trail guides for the community.</p>
+        
+        <!-- Primary CTA after description -->
+        <button class="modal-action-btn primary" onclick="goToTracker()" data-i18n="trackModal.startTracking">
+          📍 Start Tracking Now
+        </button>
+        
+        <div class="feature-list compact">
+          <div class="feature-item">
+            <span class="feature-icon">📱</span>
+            <div class="feature-text">
+              <strong data-i18n="trackModal.gps">GPS Tracking</strong>
+              <span data-i18n="trackModal.gpsDesc">Record your route with real-time location</span>
+            </div>
+          </div>
+          <div class="feature-item">
+            <span class="feature-icon">♿</span>
+            <div class="feature-text">
+              <strong data-i18n="trackModal.survey">Accessibility Survey</strong>
+              <span data-i18n="trackModal.surveyDesc">Document surface, slope, and obstacles</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-stats" id="trackModalStats">
+          <div class="modal-stat">
+            <span class="stat-value" id="modalTotalRoutes">0</span>
+            <span class="stat-label" data-i18n="trackModal.routesMapped">Routes Mapped</span>
+          </div>
+          <div class="modal-stat">
+            <span class="stat-value" id="modalTotalDistance">0</span>
+            <span class="stat-label" data-i18n="trackModal.kmDocumented">km Documented</span>
+          </div>
+        </div>
+        
+        <!-- Modal preference radio buttons -->
+        <div class="modal-preference-group">
+          <label class="modal-preference-option">
+            <input type="radio" name="trackModalPref" id="showModalAlways" value="show" checked onchange="setTrackModalPref('show')">
+            <span data-i18n="trackModal.showAlways">Show this window always</span>
+          </label>
+          <label class="modal-preference-option">
+            <input type="radio" name="trackModalPref" id="skipModalNext" value="skip" onchange="setTrackModalPref('skip')">
+            <span data-i18n="trackModal.skipNext">Next time go straight to tracker</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div id="authModal" class="auth-modal hidden" role="dialog" aria-labelledby="authModalTitle" aria-modal="true">
+    <div class="auth-modal-backdrop" onclick="closeAuthModal()"></div>
+    <div class="auth-modal-container">
+      <div class="auth-modal-header">
+        <h2 id="authModalTitle" data-i18n="authModal.welcome">Welcome to Accessible</h2>
+        <button class="auth-modal-close" onclick="closeAuthModal()" aria-label="Close authentication modal">✕</button>
+      </div>
+      
+      <div class="auth-modal-content">
+        <!-- Login Form -->
+        <div id="loginForm" class="auth-form active">
+          <div class="auth-form-header">
+            <h3 data-i18n="authModal.signInTitle">Sign In to Your Account</h3>
+            <p data-i18n="authModal.signInSubtitle">Continue your accessibility mapping journey</p>
+          </div>
+          
+          <!-- Social Sign-In Buttons -->
+          <div class="social-auth-buttons">
+            <button type="button" id="googleLoginBtn" class="social-btn google-btn">
+              <svg class="social-icon" viewBox="0 0 24 24" width="20" height="20">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              <span >Continue with Google</span>
+            </button>
+            
+            <button type="button" id="appleLoginBtn" class="social-btn apple-btn">
+              <svg class="social-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+              </svg>
+              <span >Continue with Apple</span>
+            </button>
+          </div>
+          
+          <div class="auth-divider">
+            <span >or continue with email</span>
+          </div>
+          
+          <form class="auth-inputs" id="loginFormElement" aria-label="Sign in form">
+            <div class="input-group">
+              <label for="loginEmail" class="visually-hidden" data-i18n="auth.email">Email address</label>
+              <input type="email" id="loginEmail" data-i18n-placeholder="auth.emailPlaceholder" placeholder="Email address" aria-label="Email address" required autocomplete="email" dir="ltr">
+              <span class="input-icon" aria-hidden="true">📧</span>
+            </div>
+            
+            <div class="input-group password-group">
+              <label for="loginPassword" class="visually-hidden" data-i18n="auth.password">Password</label>
+              <input type="password" id="loginPassword" data-i18n-placeholder="auth.passwordPlaceholder" placeholder="Password" aria-label="Password" required autocomplete="current-password" dir="ltr">
+              <span class="input-icon" aria-hidden="true">🔒</span>
+              <button type="button" class="password-toggle" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="Show password">👁️</button>
+            </div>
+            
+            <button type="submit" id="loginBtn" class="auth-submit-btn">
+              <span class="btn-text" data-i18n="auth.signIn">Sign In</span>
+              <span class="btn-spinner hidden" aria-hidden="true">⏳</span>
+            </button>
+          </form>
+          
+          <div class="auth-switch">
+            <p><span data-i18n="auth.noAccount">Don't have an account?</span> <button type="button" onclick="switchToSignup()" class="switch-btn" data-i18n="auth.signUp">Sign up</button></p>
+          </div>
+        </div>
+
+        <!-- Signup Form -->
+        <div id="signupForm" class="auth-form">
+          <div class="auth-form-header">
+            <h3 data-i18n="authModal.createTitle">Create Your Account</h3>
+            <p data-i18n="authModal.createSubtitle">Join the community making nature accessible</p>
+          </div>
+          
+          <!-- Social Sign-Up Buttons -->
+          <div class="social-auth-buttons">
+            <button type="button" id="googleSignupBtn" class="social-btn google-btn">
+              <svg class="social-icon" viewBox="0 0 24 24" width="20" height="20">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              <span >Sign up with Google</span>
+            </button>
+            
+            <button type="button" id="appleSignupBtn" class="social-btn apple-btn">
+              <svg class="social-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+              </svg>
+              <span >Sign up with Apple</span>
+            </button>
+          </div>
+          
+          <div class="auth-divider">
+            <span >or sign up with email</span>
+          </div>
+          
+          <form class="auth-inputs" id="signupFormElement" aria-label="Create account form">
+            <div class="input-group">
+              <label for="signupName" class="visually-hidden" data-i18n="authModal.fullName">Full name</label>
+              <input type="text" id="signupName" data-i18n-placeholder="authModal.fullName" placeholder="Full name" aria-label="Full name" required autocomplete="name">
+              <span class="input-icon" aria-hidden="true">👤</span>
+            </div>
+            
+            <div class="input-group">
+              <label for="signupEmail" class="visually-hidden" data-i18n="auth.email">Email address</label>
+              <input type="email" id="signupEmail" data-i18n-placeholder="auth.emailPlaceholder" placeholder="Email address" aria-label="Email address" required autocomplete="email" dir="ltr">
+              <span class="input-icon" aria-hidden="true">📧</span>
+            </div>
+            
+            <div class="input-group password-group">
+              <label for="signupPassword" class="visually-hidden" data-i18n="authModal.createPassword">Create password</label>
+              <input type="password" id="signupPassword" data-i18n-placeholder="authModal.createPassword" placeholder="Create password" aria-label="Create password" required autocomplete="new-password" dir="ltr">
+              <span class="input-icon" aria-hidden="true">🔒</span>
+              <button type="button" class="password-toggle" onclick="togglePasswordVisibility('signupPassword', this)" aria-label="Show password">👁️</button>
+            </div>
+            
+            <button type="submit" id="signupBtn" class="auth-submit-btn">
+              <span class="btn-text" data-i18n="authModal.createAccount">Create Account</span>
+              <span class="btn-spinner hidden" aria-hidden="true">⏳</span>
+            </button>
+          </form>
+          
+          <div class="auth-switch">
+            <p><span data-i18n="auth.hasAccount">Already have an account?</span> <button type="button" onclick="switchToLogin()" class="switch-btn" data-i18n="auth.signIn">Sign in</button></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Modal Helper Functions -->
+  <script>
+    function closeAuthModal() {
+      document.getElementById('authModal')?.classList.add('hidden');
+    }
+    function switchToSignup() {
+      document.getElementById('loginForm')?.classList.remove('active');
+      document.getElementById('signupForm')?.classList.add('active');
+    }
+    function switchToLogin() {
+      document.getElementById('signupForm')?.classList.remove('active');
+      document.getElementById('loginForm')?.classList.add('active');
+    }
+    function togglePasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🙈';
+        btn.setAttribute('aria-label', 'Hide password');
+      } else {
+        input.type = 'password';
+        btn.textContent = '👁️';
+        btn.setAttribute('aria-label', 'Show password');
+      }
+    }
+    
+    // Setup hamburger menu immediately (no Firebase dependency)
+    (function() {
+      const menuToggle = document.getElementById('menuToggle');
+      const navMenu = document.getElementById('navMenu');
+      
+      function closeMenu() {
+        navMenu?.classList.remove('active');
+        menuToggle?.classList.remove('active');
+      }
+      
+      menuToggle?.addEventListener('click', function(e) {
+        e.stopPropagation();
+        navMenu?.classList.toggle('active');
+        menuToggle?.classList.toggle('active');
+      });
+      
+      // Close menu when clicking links or buttons
+      navMenu?.querySelectorAll('a, button, .btn').forEach(function(el) {
+        el.addEventListener('click', closeMenu);
+      });
+      
+      // Close menu when clicking outside
+      document.addEventListener('click', function(e) {
+        if (navMenu?.classList.contains('active')) {
+          if (!navMenu.contains(e.target) && !menuToggle?.contains(e.target)) {
+            closeMenu();
+          }
+        }
+      });
+      
+      // High Contrast Toggle - Immediate handler
+      var hcToggle = document.getElementById('highContrastToggle');
+      
+      function updateHCButton() {
+        var isHC = document.documentElement.classList.contains('high-contrast');
+        if (hcToggle) {
+          var svg = hcToggle.querySelector('svg');
+          if (svg) {
+            svg.style.fill = isHC ? '#000' : '#fff';
+          }
+          hcToggle.style.background = isHC ? '#fff' : 'rgba(26, 26, 26, 0.95)';
+          hcToggle.style.borderColor = isHC ? '#000' : '#333';
+        }
+      }
+      
+      updateHCButton();
+      
+      // Mark as initialized to prevent module from adding duplicate listener
+      if (hcToggle) hcToggle.dataset.prefsInitialized = 'true';
+      
+      hcToggle?.addEventListener('click', function() {
+        var isNowHC = document.documentElement.classList.toggle('high-contrast');
+        try {
+          var prefs = JSON.parse(localStorage.getItem('accessNature_displayPrefs') || '{}');
+          prefs.highContrast = isNowHC;
+          localStorage.setItem('accessNature_displayPrefs', JSON.stringify(prefs));
+        } catch(e) {}
+        updateHCButton();
+        try { if (navigator.vibrate) navigator.vibrate(10); } catch(e) {}
+      });
+    })();
+  </script>
+
+  <!-- Firebase Setup -->
+  <script type="module" src="firebase-setup.js"></script>
+  
+  <!-- App JavaScript -->
+  <script type="module" src="src/landing.js"></script>
+  <script type="module" src="src/features/auth.js"></script>
+  <script type="module" src="src/ui/displayPreferences.js"></script>
+  <script type="module" src="src/pwa/pwaManager.js"></script>
+
+  <script type="module">
+  import { auth, db } from './firebase-setup.js';
+  import { onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, OAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js';
+  import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js';
+  
+  function openAuthModal() {
+    document.getElementById('authModal')?.classList.remove('hidden');
+  }
+  
+  // Expose globally for bottom nav
+  window.openAuthModal = openAuthModal;
+  
+  // Google Sign-In handler
+  async function handleGoogleAuth() {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      // Save new user profile
+      if (result._tokenResponse?.isNewUser) {
+        await setDoc(doc(db, "users", user.uid), {
+          uid: user.uid,
+          email: user.email,
+          name: user.displayName || 'Google User',
+          createdAt: new Date().toISOString(),
+          routesCount: 0,
+          totalDistance: 0,
+          provider: 'google'
+        });
+      }
+      
+      console.log('✅ Google sign-in successful:', user.email);
+      closeAuthModal();
+    } catch (error) {
+      console.error('❌ Google sign-in failed:', error);
+      if (error.code !== 'auth/popup-closed-by-user') {
+        alert((window.t?.('authModal.googleFailed') || 'Google sign-in failed') + '. ' + (window.t?.('auth.tryAgain') || 'Please try again.'));
+      }
+    }
+  }
+  
+  // Apple Sign-In handler
+  async function handleAppleAuth() {
+    try {
+      const provider = new OAuthProvider('apple.com');
+      provider.addScope('email');
+      provider.addScope('name');
+      
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      // Save new user profile
+      if (result._tokenResponse?.isNewUser) {
+        const displayName = user.displayName || result._tokenResponse?.fullName?.firstName || 'Apple User';
+        await setDoc(doc(db, "users", user.uid), {
+          uid: user.uid,
+          email: user.email || 'private@privaterelay.appleid.com',
+          name: displayName,
+          createdAt: new Date().toISOString(),
+          routesCount: 0,
+          totalDistance: 0,
+          provider: 'apple'
+        });
+      }
+      
+      console.log('✅ Apple sign-in successful:', user.email || user.uid);
+      closeAuthModal();
+    } catch (error) {
+      console.error('❌ Apple sign-in failed:', error);
+      if (error.code === 'auth/operation-not-supported-in-this-environment') {
+        alert(window.t?.('authModal.appleHttpsRequired') || 'Apple Sign-In requires HTTPS. Please use a secure connection.');
+      } else if (error.code !== 'auth/popup-closed-by-user') {
+        alert((window.t?.('authModal.appleFailed') || 'Apple sign-in failed') + '. ' + (window.t?.('auth.tryAgain') || 'Please try again.'));
+      }
+    }
+  }
+  
+  // Setup social auth button listeners
+  document.getElementById('googleLoginBtn')?.addEventListener('click', handleGoogleAuth);
+  document.getElementById('googleSignupBtn')?.addEventListener('click', handleGoogleAuth);
+  document.getElementById('appleLoginBtn')?.addEventListener('click', handleAppleAuth);
+  document.getElementById('appleSignupBtn')?.addEventListener('click', handleAppleAuth);
+  
+  // Login form handler
+  document.getElementById('loginFormElement')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const btn = document.getElementById('loginBtn');
+    
+    try {
+      btn.disabled = true;
+      btn.querySelector('.btn-text').textContent = window.t?.('auth.signingIn') || 'Signing in...';
+      await signInWithEmailAndPassword(auth, email, password);
+      closeAuthModal();
+    } catch (error) {
+      alert((window.t?.('auth.signInFailed') || 'Sign in failed') + ': ' + error.message);
+    } finally {
+      btn.disabled = false;
+      btn.querySelector('.btn-text').textContent = window.t?.('auth.signIn') || 'Sign In';
+    }
+  });
+  
+  // Signup form handler
+  document.getElementById('signupFormElement')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('signupName').value;
+    const email = document.getElementById('signupEmail').value;
+    const password = document.getElementById('signupPassword').value;
+    const btn = document.getElementById('signupBtn');
+    
+    try {
+      btn.disabled = true;
+      btn.querySelector('.btn-text').textContent = window.t?.('auth.creatingAccount') || 'Creating account...';
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(result.user, { displayName: name });
+      closeAuthModal();
+    } catch (error) {
+      alert((window.t?.('auth.signUpFailed') || 'Sign up failed') + ': ' + error.message);
+    } finally {
+      btn.disabled = false;
+      btn.querySelector('.btn-text').textContent = window.t?.('authModal.createAccount') || 'Create Account';
+    }
+  });
+  
+  onAuthStateChanged(auth, async (user) => {
+    const indicator = document.getElementById('navAuthIndicator');
+    const text = document.getElementById('navAuthStatusText');
+    const btn = document.getElementById('navAuthBtn');
+    
+    // Update global nav profile button
+    const updateGlobalNavProfile = () => {
+      const profileItem = document.getElementById('globalNavProfile');
+      const profileLabel = document.getElementById('profileLabel');
+      if (profileItem && profileLabel) {
+        if (user) {
+          const displayName = user.email?.split('@')[0] || user.displayName || 'User';
+          const truncatedName = displayName && displayName.length > 10 ? displayName.substring(0, 10) + '…' : displayName;
+          profileItem.classList.add('signed-in');
+          if (truncatedName) profileLabel.textContent = truncatedName;
+          // Save to localStorage for persistence across language toggles
+          if (displayName && displayName !== 'User') {
+            localStorage.setItem('accessNature_userName', displayName);
+          }
+        } else {
+          profileItem.classList.remove('signed-in');
+          profileLabel.textContent = window.t?.('auth.signIn') || 'Sign In';
+          localStorage.removeItem('accessNature_userName');
+        }
+        return true;
+      }
+      return false;
+    };
+    
+    if (user) {
+      // Verify user still exists
+      try {
+        await user.reload();
+      } catch (e) {
+        console.error('User session invalid');
+        try { await signOut(auth); } catch (se) {}
+        return;
+      }
+      
+      indicator?.classList.add('signed-in');
+      if (text) text.textContent = user.displayName || user.email?.split('@')[0];
+      if (btn) {
+        const displayName = user.email?.split('@')[0] || user.displayName || 'User';
+        const shortName = displayName.length > 8 ? displayName.substring(0, 8) + '…' : displayName;
+        const exitDoorSvg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`;
+        btn.innerHTML = `${exitDoorSvg} ${shortName}`;
+        btn.title = window.t?.('auth.signOut') || 'Sign Out';
+        btn.setAttribute('aria-label', `${window.t?.('auth.signOut') || 'Sign Out'} (${displayName})`);
+        btn.onclick = () => {
+          if (confirm(window.t?.('auth.signOutConfirm') || 'Sign out of Access Nature?')) {
+            signOut(auth);
+          }
+        };
+      }
+      
+      // Update global nav immediately and with retries
+      if (!updateGlobalNavProfile()) {
+        [100, 300, 500, 1000].forEach(delay => setTimeout(updateGlobalNavProfile, delay));
+      }
+      
+      // Refresh user-specific content when signing in
+      console.log('🔄 User signed in, refreshing content...');
+      if (window.landingController) {
+        await window.landingController.updateLandingAuthStatus();
+      }
+    } else {
+      indicator?.classList.remove('signed-in');
+      if (text) text.textContent = window.t?.('auth.guest') || 'Guest';
+      if (btn) { 
+        btn.innerHTML = window.t?.('auth.signIn') || 'Sign In';
+        btn.title = '';
+        btn.setAttribute('aria-label', window.t?.('auth.signIn') || 'Sign In');
+        btn.onclick = openAuthModal;
+      }
+      
+      // Update global nav
+      updateGlobalNavProfile();
+      
+      // Hide user-specific content when signing out
+      if (window.landingController) {
+        await window.landingController.updateLandingAuthStatus();
+      }
+    }
+  });
+</script>
+
+<!-- Global Bottom Navigation -->
+<script type="module">
+  import { initGlobalNav } from './src/components/globalNav.js';
+  
+  // Initialize bottom nav
+  initGlobalNav({ currentPage: 'home' });
+  
+  // Handle URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const action = urlParams.get('action');
+  const signin = urlParams.get('signin');
+  
+  // Clear URL params after reading
+  if (action || signin) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+  
+  // Handle signin request
+  if (signin === 'true') {
+    setTimeout(() => window.openAuthModal?.(), 500);
+  }
+  
+  // Handle search-trails action
+  if (action === 'search-trails') {
+    setTimeout(() => window.openTrailBrowser?.(), 1000);
+  }
+  
+  // Screen reader announcer for important updates
+  (function() {
+    // Create live region for screen reader announcements
+    const announcer = document.createElement('div');
+    announcer.id = 'sr-announcer';
+    announcer.setAttribute('aria-live', 'polite');
+    announcer.setAttribute('aria-atomic', 'true');
+    announcer.className = 'sr-only';
+    announcer.style.cssText = 'position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;';
+    document.body.appendChild(announcer);
+    
+    // Global function to announce to screen readers
+    window.announceToScreenReader = function(message) {
+      const announcer = document.getElementById('sr-announcer');
+      if (announcer) {
+        announcer.textContent = '';
+        setTimeout(() => {
+          announcer.textContent = message;
+        }, 100);
+      }
+    };
+    
+    // Announce page load after a brief delay
+    setTimeout(() => {
+      window.announceToScreenReader('Accessible app home page loaded. Press Tab to navigate.');
+    }, 1000);
+    
+    // Debug: Log focusable elements
+    console.log('🔍 Screen Reader Debug:');
+    const focusable = document.querySelectorAll('a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    console.log('  Focusable elements:', focusable.length);
+    console.log('  First focusable:', focusable[0]?.tagName, focusable[0]?.textContent?.substring(0, 30));
+  })();
+</script>
+</body>
+</html>
