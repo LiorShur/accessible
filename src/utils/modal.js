@@ -3,87 +3,14 @@
 // Beautiful modals replacing confirm() and prompt()
 // 
 // File: src/utils/modal.js
-// Version: 2.1 - With i18n support
+// Version: 2.0 - Standalone with inline styles
 // ==============================================
-
-/**
- * Modal translations
- */
-const modalTranslations = {
-  en: {
-    ok: "OK",
-    cancel: "Cancel",
-    confirm: "Confirm",
-    yes: "Yes",
-    no: "No",
-    close: "Close",
-    save: "Save",
-    delete: "Delete",
-    discard: "Discard",
-    submit: "Submit",
-    
-    // Common modal titles
-    success: "Success",
-    error: "Error",
-    warning: "Warning",
-    info: "Information",
-    confirmAction: "Confirm Action",
-    
-    // Common messages
-    areYouSure: "Are you sure?",
-    unsavedChanges: "You have unsaved changes. Do you want to discard them?",
-    deleteConfirm: "Are you sure you want to delete this? This action cannot be undone.",
-    signOutConfirm: "Are you sure you want to sign out?",
-    leavePageConfirm: "Are you sure you want to leave? Your changes will be lost."
-  },
-  he: {
-    ok: "אישור",
-    cancel: "ביטול",
-    confirm: "אישור",
-    yes: "כן",
-    no: "לא",
-    close: "סגור",
-    save: "שמור",
-    delete: "מחק",
-    discard: "בטל",
-    submit: "שלח",
-    
-    // Common modal titles
-    success: "הצלחה",
-    error: "שגיאה",
-    warning: "אזהרה",
-    info: "מידע",
-    confirmAction: "אישור פעולה",
-    
-    // Common messages
-    areYouSure: "האם אתה בטוח?",
-    unsavedChanges: "יש לך שינויים שלא נשמרו. האם לבטל אותם?",
-    deleteConfirm: "האם אתה בטוח שברצונך למחוק? לא ניתן לבטל פעולה זו.",
-    signOutConfirm: "האם אתה בטוח שברצונך להתנתק?",
-    leavePageConfirm: "האם אתה בטוח שברצונך לעזוב? השינויים שלך יאבדו."
-  }
-};
-
-/**
- * Get modal translation
- */
-function getModalTranslation(key) {
-  const lang = localStorage.getItem('accessNature_language') || 'en';
-  return modalTranslations[lang]?.[key] || modalTranslations['en']?.[key] || key;
-}
 
 class ModalManager {
   constructor() {
     this.activeModals = new Map();
     this.modalCounter = 0;
     this.initialized = false;
-  }
-
-  /**
-   * Get translation helper
-   */
-  t(key) {
-    return getModalTranslation(key);
   }
 
   init() {
@@ -119,10 +46,9 @@ class ModalManager {
         }
         
         .modal-dialog {
-          background: linear-gradient(145deg, #1a1a2e 0%, #252540 100%);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: #ffffff;
           border-radius: 16px;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
           max-width: min(420px, calc(100vw - 32px));
           width: 100%;
           max-height: 90vh;
@@ -141,7 +67,7 @@ class ModalManager {
           align-items: center;
           gap: 12px;
           padding: 20px 24px 16px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          border-bottom: 1px solid #e5e7eb;
         }
         
         .modal-icon {
@@ -154,7 +80,7 @@ class ModalManager {
           margin: 0;
           font-size: 18px;
           font-weight: 600;
-          color: #fff;
+          color: #111827;
         }
         
         .modal-close {
@@ -167,14 +93,14 @@ class ModalManager {
           background: transparent;
           border-radius: 8px;
           cursor: pointer;
-          color: rgba(255, 255, 255, 0.5);
+          color: #9ca3af;
           font-size: 24px;
           transition: all 0.2s;
         }
         
         .modal-close:hover {
-          background: rgba(255, 255, 255, 0.1);
-          color: #fff;
+          background: #f3f4f6;
+          color: #6b7280;
         }
         
         .modal-body {
@@ -184,7 +110,7 @@ class ModalManager {
         }
         
         .modal-message {
-          color: rgba(255, 255, 255, 0.7);
+          color: #4b5563;
           font-size: 15px;
           line-height: 1.6;
           margin: 0 0 16px;
@@ -198,31 +124,25 @@ class ModalManager {
         .modal-input {
           width: 100%;
           padding: 12px 16px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          border: 2px solid #e5e7eb;
           border-radius: 10px;
           font-size: 15px;
           font-family: inherit;
           transition: border-color 0.2s, box-shadow 0.2s;
           box-sizing: border-box;
-          background: rgba(255, 255, 255, 0.05);
-          color: #fff;
-        }
-        
-        .modal-input::placeholder {
-          color: rgba(255, 255, 255, 0.4);
         }
         
         .modal-input:focus {
           outline: none;
           border-color: #667eea;
-          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         
         .modal-footer {
           display: flex;
           gap: 12px;
           padding: 16px 24px 20px;
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          border-top: 1px solid #e5e7eb;
           flex-wrap: wrap;
           max-height: 50vh;
           overflow-y: auto;
@@ -269,13 +189,12 @@ class ModalManager {
         }
         
         .modal-btn-secondary {
-          background: rgba(255, 255, 255, 0.08);
-          color: rgba(255, 255, 255, 0.8);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: #f3f4f6;
+          color: #374151;
         }
         
         .modal-btn-secondary:hover {
-          background: rgba(255, 255, 255, 0.12);
+          background: #e5e7eb;
         }
         
         .modal-btn-primary {
@@ -351,6 +270,85 @@ class ModalManager {
         .modal-warning .modal-header { border-bottom-color: #f59e0b; }
         .modal-info .modal-header { border-bottom-color: #3b82f6; }
         .modal-confirm .modal-header { border-bottom-color: #8b5cf6; }
+        
+        /* Speech-to-text input group */
+        .modal-input-group {
+          display: flex;
+          gap: 8px;
+          align-items: stretch;
+        }
+        
+        .modal-input-group .modal-input {
+          flex: 1;
+          min-width: 0;
+        }
+        
+        .modal-mic-btn {
+          width: 48px;
+          height: 48px;
+          min-width: 48px;
+          border: 2px solid #e5e7eb;
+          border-radius: 10px;
+          background: #f9fafb;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          transition: all 0.2s;
+        }
+        
+        .modal-mic-btn:hover {
+          background: #f3f4f6;
+          border-color: #d1d5db;
+        }
+        
+        .modal-mic-btn.listening {
+          background: #fee2e2;
+          border-color: #ef4444;
+          animation: pulse-mic 1.5s infinite;
+        }
+        
+        .modal-mic-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        
+        @keyframes pulse-mic {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+          50% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+        }
+        
+        .modal-speech-status {
+          font-size: 12px;
+          color: #6b7280;
+          margin-top: 8px;
+          min-height: 18px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        
+        .modal-speech-status.listening {
+          color: #ef4444;
+        }
+        
+        .modal-speech-status.error {
+          color: #ef4444;
+        }
+        
+        .speech-dot {
+          width: 8px;
+          height: 8px;
+          background: #ef4444;
+          border-radius: 50%;
+          animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
       `;
       document.head.appendChild(style);
     }
@@ -468,20 +466,20 @@ class ModalManager {
   getDefaultButtons(type, hasInput) {
     if (hasInput) {
       return [
-        { label: this.t('cancel'), action: 'cancel', variant: 'secondary' },
-        { label: this.t('ok'), action: 'ok', variant: 'primary' }
+        { label: 'Cancel', action: 'cancel', variant: 'secondary' },
+        { label: 'OK', action: 'ok', variant: 'primary' }
       ];
     }
     
     switch (type) {
       case 'confirm':
         return [
-          { label: this.t('cancel'), action: 'cancel', variant: 'secondary' },
-          { label: this.t('confirm'), action: 'confirm', variant: 'primary' }
+          { label: 'Cancel', action: 'cancel', variant: 'secondary' },
+          { label: 'Confirm', action: 'confirm', variant: 'primary' }
         ];
       default:
         return [
-          { label: this.t('ok'), action: 'ok', variant: 'primary' }
+          { label: 'OK', action: 'ok', variant: 'primary' }
         ];
     }
   }
@@ -560,32 +558,6 @@ class ModalManager {
     }, 200);
   }
 
-  /**
-   * Close all active modals immediately
-   */
-  closeAll() {
-    console.log('🔒 Closing all modals, count:', this.activeModals.size);
-    
-    // Iterate through all active modals and close them
-    for (const [modalId, modalData] of this.activeModals) {
-      const { backdrop, resolve } = modalData;
-      
-      // Remove animation for immediate close
-      backdrop.classList.remove('active');
-      backdrop.remove();
-      
-      // Resolve with 'close' action
-      if (resolve) resolve('close');
-    }
-    
-    // Clear all modals
-    this.activeModals.clear();
-    
-    // Restore body scroll
-    document.body.style.overflow = '';
-    document.body.classList.remove('modal-open');
-  }
-
   escapeHtml(text) {
     if (typeof text !== 'string') return text;
     const div = document.createElement('div');
@@ -621,6 +593,206 @@ class ModalManager {
       title,
       message,
       input: { defaultValue }
+    });
+  }
+
+  /**
+   * Prompt with speech-to-text support
+   * Shows a microphone button next to the input field
+   */
+  promptWithSpeech(message, title = 'Input', defaultValue = '') {
+    return new Promise((resolve) => {
+      this.init();
+      
+      const modalId = `modal-${++this.modalCounter}`;
+      const hasSpeechSupport = window.speechToText?.checkSupport() || false;
+      
+      // Create backdrop
+      const backdrop = document.createElement('div');
+      backdrop.className = 'modal-backdrop';
+      backdrop.id = modalId;
+      
+      // Create dialog
+      const dialog = document.createElement('div');
+      dialog.className = 'modal-dialog modal-info';
+      
+      // Build HTML with speech support
+      let inputHtml;
+      if (hasSpeechSupport) {
+        inputHtml = `
+          <div class="modal-input-group">
+            <input type="text" class="modal-input" id="${modalId}-input" 
+                   placeholder="Type or tap mic to speak..." 
+                   value="${this.escapeHtml(defaultValue)}">
+            <button type="button" class="modal-mic-btn" id="${modalId}-mic" title="Tap to speak">
+              🎤
+            </button>
+          </div>
+          <div class="modal-speech-status" id="${modalId}-status"></div>
+        `;
+      } else {
+        inputHtml = `
+          <input type="text" class="modal-input" id="${modalId}-input" 
+                 placeholder="" 
+                 value="${this.escapeHtml(defaultValue)}">
+        `;
+      }
+      
+      dialog.innerHTML = `
+        <div class="modal-header">
+          <span class="modal-icon">📝</span>
+          <h3 class="modal-title">${this.escapeHtml(title)}</h3>
+          <button class="modal-close" data-action="close">×</button>
+        </div>
+        <div class="modal-body">
+          ${message ? `<p class="modal-message">${this.escapeHtml(message)}</p>` : ''}
+          ${inputHtml}
+        </div>
+        <div class="modal-footer">
+          <button class="modal-btn modal-btn-secondary" data-action="cancel">Cancel</button>
+          <button class="modal-btn modal-btn-primary" data-action="ok">Save</button>
+        </div>
+      `;
+      
+      backdrop.appendChild(dialog);
+      document.body.appendChild(backdrop);
+      
+      // Store reference
+      this.activeModals.set(modalId, { backdrop, resolve });
+      
+      // Get elements
+      const input = dialog.querySelector(`#${modalId}-input`);
+      const micBtn = dialog.querySelector(`#${modalId}-mic`);
+      const statusEl = dialog.querySelector(`#${modalId}-status`);
+      
+      // Speech recognition state
+      let isListening = false;
+      
+      // Setup mic button if supported
+      if (micBtn && hasSpeechSupport) {
+        micBtn.addEventListener('click', () => {
+          if (isListening) {
+            // Stop listening
+            window.speechToText.stop();
+            isListening = false;
+            micBtn.classList.remove('listening');
+            statusEl.innerHTML = '';
+            statusEl.className = 'modal-speech-status';
+          } else {
+            // Start listening
+            const started = window.speechToText.start(
+              // On result
+              (result) => {
+                if (result.isFinal) {
+                  // Append final result to input
+                  const currentValue = input.value;
+                  const newValue = currentValue ? `${currentValue} ${result.final}` : result.final;
+                  input.value = newValue.trim();
+                  input.focus();
+                  // Keep listening for more
+                  statusEl.innerHTML = '<span class="speech-dot"></span> Listening... (tap mic to stop)';
+                } else {
+                  // Show interim results in status
+                  statusEl.innerHTML = `<span class="speech-dot"></span> ${result.interim || 'Listening...'}`;
+                }
+              },
+              // On error
+              (error) => {
+                isListening = false;
+                micBtn.classList.remove('listening');
+                statusEl.textContent = error.message;
+                statusEl.className = 'modal-speech-status error';
+                
+                // Clear error after 3 seconds
+                setTimeout(() => {
+                  if (statusEl.classList.contains('error')) {
+                    statusEl.textContent = '';
+                    statusEl.className = 'modal-speech-status';
+                  }
+                }, 3000);
+              }
+            );
+            
+            if (started) {
+              isListening = true;
+              micBtn.classList.add('listening');
+              statusEl.innerHTML = '<span class="speech-dot"></span> Listening...';
+              statusEl.className = 'modal-speech-status listening';
+            }
+          }
+        });
+      }
+      
+      // Close handler
+      const closeModal = (action) => {
+        // Stop speech recognition if active
+        if (isListening) {
+          window.speechToText?.stop();
+        }
+        
+        let result;
+        if (action === 'ok') {
+          result = input.value;
+        } else {
+          result = null;
+        }
+        
+        backdrop.classList.remove('active');
+        
+        setTimeout(() => {
+          backdrop.remove();
+          this.activeModals.delete(modalId);
+          
+          if (this.activeModals.size === 0) {
+            document.body.style.overflow = '';
+            document.body.classList.remove('modal-open');
+          }
+          
+          resolve(result);
+        }, 200);
+      };
+      
+      // Button event listeners
+      dialog.querySelectorAll('[data-action]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          closeModal(btn.getAttribute('data-action'));
+        });
+      });
+      
+      // Backdrop click to close
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) {
+          closeModal('cancel');
+        }
+      });
+      
+      // ESC key to close
+      const escHandler = (e) => {
+        if (e.key === 'Escape') {
+          closeModal('cancel');
+          document.removeEventListener('keydown', escHandler);
+        }
+      };
+      document.addEventListener('keydown', escHandler);
+      
+      // Enter key to submit
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          closeModal('ok');
+        }
+      });
+      
+      // Show modal
+      requestAnimationFrame(() => {
+        backdrop.classList.add('active');
+        input.focus();
+        if (defaultValue) {
+          input.select();
+        }
+      });
+      
+      document.body.style.overflow = 'hidden';
+      document.body.classList.add('modal-open');
     });
   }
 
@@ -664,21 +836,16 @@ export const modal = {
   alert: (message, title) => modalManager.alert(message, title),
   confirm: (message, title) => modalManager.confirm(message, title),
   prompt: (message, title, defaultValue) => modalManager.prompt(message, title, defaultValue),
+  promptWithSpeech: (message, title, defaultValue) => modalManager.promptWithSpeech(message, title, defaultValue),
   success: (message, title) => modalManager.success(message, title),
   error: (message, title) => modalManager.error(message, title),
   warning: (message, title) => modalManager.warning(message, title),
-  choice: (message, title, choices) => modalManager.choice(message, title, choices),
-  closeAll: () => modalManager.closeAll(),
-  t: (key) => modalManager.t(key)
+  choice: (message, title, choices) => modalManager.choice(message, title, choices)
 };
-
-// Export translations for external use
-export { modalTranslations, getModalTranslation };
 
 // Make globally available
 if (typeof window !== 'undefined') {
   window.modal = modal;
-  window.getModalTranslation = getModalTranslation;
 }
 
 export default modal;

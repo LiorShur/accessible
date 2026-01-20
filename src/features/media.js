@@ -34,7 +34,7 @@ export class MediaController {
 
   async capturePhoto() {
     if (!this.appState.getTrackingState().isTracking) {
-      toast.warningKey('startTrackingForPhotos');
+      toast.warning('Start tracking first to capture photos');
       return;
     }
 
@@ -65,7 +65,7 @@ export class MediaController {
         originalSize: file.size
       });
 
-      toast.successKey('photoCaptured');
+      toast.success('Photo captured and saved!');
       
       // Track photo upload for engagement
       if (userService.isInitialized) {
@@ -75,7 +75,7 @@ export class MediaController {
       }
     } catch (error) {
       console.error('Failed to capture photo:', error);
-      toast.errorKey('photoCaptureFailed');
+      toast.error('Failed to capture photo: ' + error.message);
     }
 
     event.target.value = '';
@@ -83,11 +83,12 @@ export class MediaController {
 
   async addTextNote() {
     if (!this.appState.getTrackingState().isTracking) {
-      toast.warningKey('startTrackingForNotes');
+      toast.warning('Start tracking first to add notes');
       return;
     }
 
-    const note = await modal.prompt('What would you like to note?', '📝 Add Note');
+    // Use speech-enabled prompt for easier note taking
+    const note = await modal.promptWithSpeech('Type or speak your note:', '📝 Add Note');
     if (!note || note.trim() === '') return;
 
     try {
@@ -104,10 +105,10 @@ export class MediaController {
         timestamp: Date.now()
       });
 
-      toast.successKey('noteAddedSuccess');
+      toast.success('Note added successfully!');
     } catch (error) {
       console.error('Failed to add note:', error);
-      toast.errorKey('noteAddFailed');
+      toast.error('Failed to add note: ' + error.message);
     }
   }
 
@@ -155,14 +156,14 @@ export class MediaController {
     const photos = this.getStoredPhotos();
 
     if (photos.length === 0) {
-      toast.infoKey('noStoredPhotos');
+      toast.info('No stored photos found.');
       return;
     }
 
     const shouldDelete = await modal.confirm(`Found ${photos.length} photos. Delete all to free up space?`, '🗑️ Delete Photos?');
     if (shouldDelete) {
       this.deleteAllPhotos();
-      toast.successKey('allPhotosDeleted');
+      toast.success('All photos deleted.');
     }
   }
 
