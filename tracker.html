@@ -63,6 +63,37 @@
   border: 0;
 }
 
+/* RTL Override: These elements should ALWAYS stay LTR */
+.top-nav,
+#topControlBar,
+#secondaryRow,
+#rightControls,
+#leftControls,
+nav,
+.nav-menu,
+.nav-brand,
+.nav-auth-indicator,
+.tracker-controls,
+.control-row,
+.elevation-display,
+.heading-display,
+#accessibilitySurveyBtn,
+.voice-control-fab,
+.voice-overlay,
+#accessibility-reminder,
+#survey-prompt-overlay {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+/* Keep input fields LTR for coordinates/numbers */
+input[type="number"],
+input[type="tel"],
+input[type="email"],
+.coordinates-display {
+  direction: ltr !important;
+}
+
 /* Focus styles for all interactive elements */
 button:focus-visible,
 a:focus-visible,
