@@ -3,11 +3,8 @@ import { haversineDistance } from '../utils/calculations.js';
 import { toast } from '../utils/toast.js';
 import { modal } from '../utils/modal.js';
 import { userService } from '../services/userService.js';
-import { storageService } from '../services/storageService.js';
-import { uploadProgress } from '../ui/uploadProgress.js';
 import { trailGuideGeneratorV2 } from '../features/trailGuideGeneratorV2.js';
 import { getElevation } from '../utils/geolocation.js';
-import { t } from '../i18n/i18n.js';
 
 export class TrackingController {
   constructor(appState) {
@@ -33,26 +30,6 @@ async start() {
   }
 
   console.log('🚀 Starting GPS tracking...');
-
-  // Check permission status first (if Permissions API available)
-  if (navigator.permissions) {
-    try {
-      const status = await navigator.permissions.query({ name: 'geolocation' });
-      console.log('📍 Geolocation permission status:', status.state);
-      
-      if (status.state === 'denied') {
-        toast.errorKey('locationDenied', { duration: 8000 });
-        throw new Error('Location permission denied. Enable in browser settings.');
-      }
-      
-      if (status.state === 'prompt') {
-        toast.infoKey('allowLocation', { duration: 5000 });
-      }
-    } catch (e) {
-      // Permissions API not fully supported, continue anyway
-      console.log('📍 Permissions API check failed, proceeding with location request');
-    }
-  }
 
   // FIXED: Check if we're resuming a restored route
   const currentElapsed = this.appState.getElapsedTime();
@@ -157,9 +134,23 @@ showAccessibilitySurveyReminder() {
     return;
   }
 
+  // Get translations
+  const lang = window.i18n?.getLanguage() || localStorage.getItem('accessNature_language') || 'en';
+  const isHebrew = lang === 'he';
+  
+  const texts = {
+    title: isHebrew ? '📋 סקר נגישות' : '📋 Accessibility Survey',
+    message: isHebrew 
+      ? 'עזור לאחרים על ידי תיעוד מאפייני הנגישות של המסלול!' 
+      : 'Help others by documenting this trail\'s accessibility features as you go!',
+    openSurvey: isHebrew ? 'פתח סקר' : 'Open Survey',
+    later: isHebrew ? 'אחר כך' : 'Later'
+  };
+
   // Create reminder banner
   const reminder = document.createElement('div');
   reminder.id = 'accessibility-reminder';
+  reminder.setAttribute('data-no-i18n', 'true'); // Prevent i18n system from modifying
   reminder.style.cssText = `
     position: fixed;
     top: calc(var(--nav-height, 56px) + 130px);
@@ -174,6 +165,7 @@ showAccessibilitySurveyReminder() {
     width: calc(100% - 40px);
     box-shadow: 0 8px 32px rgba(33, 150, 243, 0.4);
     animation: slideDown 0.4s ease;
+    direction: ltr;
   `;
 
   reminder.innerHTML = `
@@ -181,10 +173,10 @@ showAccessibilitySurveyReminder() {
       <div style="font-size: 32px; line-height: 1;">♿</div>
       <div style="flex: 1;">
         <div style="font-weight: 600; font-size: 15px; margin-bottom: 6px;">
-          📋 ${t('trackerUI.surveyReminder.title')}
+          ${texts.title}
         </div>
         <div style="font-size: 13px; opacity: 0.95; line-height: 1.4;">
-          ${t('trackerUI.surveyReminder.message')}
+          ${texts.message}
         </div>
       </div>
     </div>
@@ -199,7 +191,7 @@ showAccessibilitySurveyReminder() {
         font-weight: 600;
         font-size: 14px;
         cursor: pointer;
-      ">${t('trackerUI.surveyReminder.openSurvey')}</button>
+      ">${texts.openSurvey}</button>
       <button id="remind-later-btn" style="
         padding: 10px 16px;
         background: rgba(255,255,255,0.2);
@@ -208,7 +200,7 @@ showAccessibilitySurveyReminder() {
         border-radius: 8px;
         font-size: 14px;
         cursor: pointer;
-      ">${t('trackerUI.surveyReminder.later')}</button>
+      ">${texts.later}</button>
     </div>
   `;
 
@@ -251,7 +243,10 @@ showAccessibilitySurveyReminder() {
   laterBtn.addEventListener('click', () => {
     closeReminder();
     // Show a subtle toast reminder
-    toast.infoKey('surveyHint', { duration: 4000 });
+    const laterToast = isHebrew 
+      ? 'לחץ על כפתור ♿ בכל עת למילוי הסקר'
+      : 'Tap the ♿ button anytime to fill the survey';
+    toast.info(laterToast, { duration: 4000 });
   });
 
   // Auto-dismiss after 15 seconds
@@ -268,8 +263,26 @@ showAccessibilitySurveyReminder() {
  */
 async promptForAccessibilitySurvey() {
   return new Promise((resolve) => {
+    // Get translations
+    const lang = window.i18n?.getLanguage() || localStorage.getItem('accessNature_language') || 'en';
+    const isHebrew = lang === 'he';
+    
+    const texts = {
+      title: isHebrew ? 'סקר נגישות' : 'Accessibility Survey',
+      message1: isHebrew 
+        ? 'עדיין לא מילאת את סקר הנגישות למסלול זה.'
+        : "You haven't filled the accessibility survey for this trail yet.",
+      message2: isHebrew
+        ? 'המידע שלך עוזר לאחרים עם אתגרי ניידות לגלות מסלולים נגישים!'
+        : 'Your input helps others with mobility challenges discover accessible trails!',
+      fillNow: isHebrew ? 'מלא סקר עכשיו' : 'Fill Survey Now',
+      skipSave: isHebrew ? 'דלג ושמור ללא סקר' : 'Skip & Save Without Survey',
+      cancel: isHebrew ? 'ביטול' : 'Cancel'
+    };
+    
     const overlay = document.createElement('div');
     overlay.id = 'survey-prompt-overlay';
+    overlay.setAttribute('data-no-i18n', 'true');
     overlay.style.cssText = `
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -290,6 +303,7 @@ async promptForAccessibilitySurvey() {
         overflow: hidden;
         box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         animation: scaleIn 0.3s ease;
+        direction: ltr;
       ">
         <div style="
           background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%);
@@ -298,16 +312,16 @@ async promptForAccessibilitySurvey() {
         ">
           <div style="font-size: 48px; margin-bottom: 8px;">♿</div>
           <h3 style="margin: 0; color: white; font-size: 18px; font-weight: 600;">
-            ${t('trackerUI.surveyPrompt.title')}
+            ${texts.title}
           </h3>
         </div>
         
         <div style="padding: 20px;">
           <p style="margin: 0 0 8px; color: #333; font-size: 15px; line-height: 1.5; text-align: center;">
-            ${t('trackerUI.surveyPrompt.notFilled')}
+            ${texts.message1}
           </p>
           <p style="margin: 0 0 20px; color: #666; font-size: 14px; line-height: 1.4; text-align: center;">
-            ${t('trackerUI.surveyPrompt.helpOthers')}
+            ${texts.message2}
           </p>
           
           <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -327,7 +341,7 @@ async promptForAccessibilitySurvey() {
               gap: 8px;
             ">
               <span style="font-size: 18px;">📋</span>
-              ${t('trackerUI.surveyPrompt.fillNow')}
+              ${texts.fillNow}
             </button>
             
             <button id="survey-skip-btn" style="
@@ -340,7 +354,7 @@ async promptForAccessibilitySurvey() {
               font-size: 14px;
               cursor: pointer;
             ">
-              ${t('trackerUI.surveyPrompt.skipAndSave')}
+              ${texts.skipSave}
             </button>
             
             <button id="survey-cancel-btn" style="
@@ -352,7 +366,7 @@ async promptForAccessibilitySurvey() {
               font-size: 13px;
               cursor: pointer;
             ">
-              ${t('trackerUI.surveyPrompt.cancel')}
+              ${texts.cancel}
             </button>
           </div>
         </div>
@@ -643,20 +657,23 @@ async stop() {
   handlePositionError(error) {
     console.error('🚨 GPS error:', error);
     
+    let errorMessage = 'GPS error: ';
     switch (error.code) {
       case error.PERMISSION_DENIED:
-        toast.errorKey('locationDenied', { duration: 6000 });
+        errorMessage += 'Location permission denied. Please enable location access and try again.';
         break;
       case error.POSITION_UNAVAILABLE:
-        toast.errorKey('locationUnavailable', { duration: 6000 });
+        errorMessage += 'Location information unavailable. Please check your GPS settings.';
         break;
       case error.TIMEOUT:
-        toast.errorKey('locationTimeout', { duration: 6000 });
+        errorMessage += 'Location request timed out. Please try again.';
         break;
       default:
-        toast.errorKey('locationError', { duration: 6000 });
+        errorMessage += 'An unknown error occurred.';
         break;
     }
+
+    toast.error(errorMessage, { title: 'GPS Error', duration: 6000 });
 
     if (error.code === error.PERMISSION_DENIED) {
       this.stop(); // Stop tracking if permission denied
@@ -721,19 +738,19 @@ async stop() {
     const notes = routeData.filter(point => point.type === 'text').length;
 
     // Create a detailed save dialog
-    const routeStats = `📍 ${t('trackerUI.tracking.gpsPoints')}: ${locationPoints}
-📏 ${t('trackerUI.tracking.distance')}: ${totalDistance.toFixed(2)} km
-⏱️ ${t('trackerUI.tracking.duration')}: ${this.formatTime(elapsedTime)}
-📷 ${t('trackerUI.tracking.photos')}: ${photos}
-📝 ${t('trackerUI.tracking.notes')}: ${notes}`;
+    const routeStats = `📍 GPS Points: ${locationPoints}
+📏 Distance: ${totalDistance.toFixed(2)} km
+⏱️ Duration: ${this.formatTime(elapsedTime)}
+📷 Photos: ${photos}
+📝 Notes: ${notes}`;
 
-    const wantsToSave = await modal.confirm(routeStats, t('trackerUI.saveFlow.saveRoute'));
+    const wantsToSave = await modal.confirm(routeStats, 'Save Route?');
     
     if (wantsToSave) {
       await this.saveRoute();
     } else {
       // Ask if they want to discard
-      const confirmDiscard = await modal.confirm(t('trackerUI.saveFlow.allDataLost'), `⚠️ ${t('trackerUI.saveFlow.discardRoute')}`);
+      const confirmDiscard = await modal.confirm('All route data will be lost!', '⚠️ Discard Route?');
       if (confirmDiscard) {
         this.discardRoute();
       } else {
@@ -786,11 +803,11 @@ async saveRoute(skipSurveyPrompt = false) {
 
     const defaultName = `Route ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
     
-    let routeName = await modal.prompt(t('trackerUI.saveFlow.enterRouteName'), t('trackerUI.saveFlow.nameYourRoute'), defaultName);
+    let routeName = await modal.prompt('Enter a name for this route:', 'Name Your Route', defaultName);
     
     // If they cancelled the name dialog, ask if they want to use default
     if (routeName === null) {
-      const useDefault = await modal.confirm(t('trackerUI.saveFlow.useDefaultPrompt').replace('{name}', defaultName), t('trackerUI.saveFlow.useDefaultName'));
+      const useDefault = await modal.confirm(`Use default name "${defaultName}"?`, 'Use Default Name?');
       routeName = useDefault ? defaultName : null;
     }
 
@@ -815,32 +832,26 @@ async saveRoute(skipSurveyPrompt = false) {
     // Save to local storage first (for route history)
     const savedSession = await this.appState.saveSession(routeName);
     
-    // Check if user is logged in
+    // ALSO save to offlineSync's pending system for cloud sync later
+    // This ensures the route appears in "Local Storage" modal and can be uploaded
+    const pendingData = {
+      routeData: routeData,
+      routeInfo: routeInfo,
+      accessibilityData: accessibilityData,
+      name: routeName,
+      totalDistance: routeInfo.totalDistance,
+      elapsedTime: routeInfo.elapsedTime
+    };
+    
+    // Import and use offlineSync
+    const { offlineSync } = await import('../features/offlineSync.js');
+    await offlineSync.saveRoute(pendingData, null); // Save without user - will be linked on upload
+    
+    console.log('✅ Route saved to both local storage and pending queue');
+    
+    // Check if user is logged in and offer cloud save
     const app = window.AccessNatureApp;
     const authController = app?.getController('auth');
-    const isOnlineAndAuthenticated = navigator.onLine && authController?.isAuthenticated();
-    
-    // Import offlineSync
-    const { offlineSync } = await import('../features/offlineSync.js');
-    
-    // Only save to pending queue if offline or not authenticated
-    // This prevents duplicates when user saves to cloud directly
-    let pendingLocalId = null;
-    
-    if (!isOnlineAndAuthenticated) {
-      const pendingData = {
-        routeData: routeData,
-        routeInfo: routeInfo,
-        accessibilityData: accessibilityData,
-        name: routeName,
-        totalDistance: routeInfo.totalDistance,
-        elapsedTime: routeInfo.elapsedTime
-      };
-      
-      const result = await offlineSync.saveRoute(pendingData, null);
-      pendingLocalId = result.localId;
-      console.log('✅ Route saved to pending queue with ID:', pendingLocalId);
-    }
     
     if (authController?.isAuthenticated()) {
       // Ask about cloud save with public/private option
@@ -851,49 +862,22 @@ async saveRoute(skipSurveyPrompt = false) {
           routeInfo.makePublic = cloudChoice === 'public';
           
           // Save to cloud directly
-          const cloudId = await this.saveRouteToCloud(routeData, routeInfo, accessibilityData, authController);
+          await this.saveRouteToCloud(routeData, routeInfo, accessibilityData, authController);
           
-          // Mark pending as uploaded if it exists
-          if (pendingLocalId) {
-            await offlineSync.markRouteUploaded(pendingLocalId, cloudId);
-            console.log('✅ Pending route marked as uploaded');
+          // Mark as uploaded in pending queue
+          const pendingRoutes = await offlineSync.getPendingRoutes();
+          const justSaved = pendingRoutes.find(r => r.data?.name === routeName && r.status === 'pending');
+          if (justSaved) {
+            await offlineSync.markRouteUploaded(justSaved.localId, 'cloud-synced');
           }
           
         } catch (cloudError) {
           console.error('❌ Cloud save failed:', cloudError);
-          
-          // If cloud failed and we didn't save to pending earlier, save now
-          if (!pendingLocalId) {
-            const pendingData = {
-              routeData: routeData,
-              routeInfo: routeInfo,
-              accessibilityData: accessibilityData,
-              name: routeName,
-              totalDistance: routeInfo.totalDistance,
-              elapsedTime: routeInfo.elapsedTime
-            };
-            await offlineSync.saveRoute(pendingData, null);
-          }
-          
-          toast.warningKey('savedLocallyCloudFailed', { duration: 6000 });
-        }
-      } else {
-        // User skipped cloud save - save to pending if we haven't already
-        if (!pendingLocalId) {
-          const pendingData = {
-            routeData: routeData,
-            routeInfo: routeInfo,
-            accessibilityData: accessibilityData,
-            name: routeName,
-            totalDistance: routeInfo.totalDistance,
-            elapsedTime: routeInfo.elapsedTime
-          };
-          await offlineSync.saveRoute(pendingData, null);
-          toast.success(`"${routeName}" saved locally!`);
+          toast.warning('Saved locally! Cloud upload failed - you can retry from Local Storage.', { duration: 6000 });
         }
       }
     } else {
-      // User not logged in - route is already saved to pending queue
+      // User not logged in - route is already saved locally and to pending queue
       toast.success(`"${routeName}" saved locally!`);
       
       const wantsToSignIn = await modal.confirm(
@@ -933,24 +917,24 @@ async saveRoute(skipSurveyPrompt = false) {
     
   } catch (error) {
     console.error('❌ Failed to save route:', error);
-    toast.errorKey('saveError');
+    toast.error('Failed to save route: ' + error.message);
   }
 }
 
 // NEW: Ask user about cloud save options
 async askCloudSaveOptions(routeName) {
-  const message = `"${routeName}" ${t('trackerUI.saveFlow.routeSaved')} 
+  const message = `"${routeName}" saved locally! 
 
-☁️ ${t('trackerUI.saveFlow.cloudSaveOptions')}
+☁️ Would you like to save to cloud and create a trail guide?
 
-🔒 ${t('trackerUI.saveFlow.savePrivate')}: ${t('trackerUI.saveFlow.privateDesc')}
-🌍 ${t('trackerUI.saveFlow.savePublic')}: ${t('trackerUI.saveFlow.publicDesc')}
-❌ ${t('trackerUI.saveFlow.saveLocal')}: ${t('trackerUI.saveFlow.localDesc')}`;
+🔒 PRIVATE: Only you can see it (you can make it public later)
+🌍 PUBLIC: Share with the community immediately  
+❌ SKIP: Keep local only`;
 
-  const choice = await modal.choice(message, `☁️ ${t('trackerUI.saveFlow.cloudSaveOptions')}`, [
-    { label: `🔒 ${t('trackerUI.saveFlow.savePrivate')}`, value: 'private' },
-    { label: `🌍 ${t('trackerUI.saveFlow.savePublic')}`, value: 'public' },
-    { label: `❌ ${t('trackerUI.saveFlow.saveLocal')}`, value: 'skip' }
+  const choice = await modal.choice(message, '☁️ Cloud Save Options', [
+    { label: '🔒 Private', value: 'private' },
+    { label: '🌍 Public', value: 'public' },
+    { label: '❌ Skip', value: 'skip' }
   ]);
   
   return choice || 'skip';
@@ -1034,21 +1018,6 @@ async generateTrailGuide(routeId, routeData, routeInfo, accessibilityData, authC
 
 // NEW: Save route to cloud (separate method)
 async saveRouteToCloud(routeData, routeInfo, accessibilityData, authController) {
-  // Count photos to determine stages
-  const photoCount = routeData.filter(p => p.type === 'photo' && p.content).length;
-  const hasPhotos = photoCount > 0;
-  
-  // Define upload stages
-  const stages = [
-    { id: 'prepare', label: 'Preparing route data' },
-    ...(hasPhotos ? [{ id: 'photos', label: `Uploading photos (${photoCount})` }] : []),
-    { id: 'route', label: 'Saving route to cloud' },
-    { id: 'guide', label: 'Generating trail guide' }
-  ];
-  
-  // Show upload progress modal
-  uploadProgress.show('Uploading to Cloud', stages);
-  
   try {
     // Check network connectivity first
     if (!navigator.onLine) {
@@ -1056,11 +1025,6 @@ async saveRouteToCloud(routeData, routeInfo, accessibilityData, authController) 
     }
     
     console.log('☁️ Saving route to cloud...');
-    
-    // Stage 1: Prepare
-    uploadProgress.setStageActive('prepare');
-    uploadProgress.setProgress(5);
-    uploadProgress.setStatus('Preparing route data...');
     
     // Import Firestore functions
     const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js");
@@ -1070,44 +1034,6 @@ async saveRouteToCloud(routeData, routeInfo, accessibilityData, authController) 
     if (!user) {
       throw new Error('User not authenticated');
     }
-    
-    uploadProgress.setStageCompleted('prepare');
-    uploadProgress.setProgress(10);
-    
-    // Stage 2: Upload photos (if any)
-    let processedRouteData = routeData;
-    let routeId = null;
-    let photosUploaded = 0;
-    
-    if (hasPhotos) {
-      uploadProgress.setStageActive('photos', `0/${photoCount}`);
-      uploadProgress.setStatus('Uploading photos...');
-      
-      const result = await storageService.prepareRouteForSave(
-        routeData,
-        user.uid,
-        (current, total) => {
-          uploadProgress.updatePhotoProgress(current, total, 10, 50);
-        }
-      );
-      
-      processedRouteData = result.routeData;
-      routeId = result.routeId;
-      photosUploaded = result.photosUploaded;
-      
-      if (photosUploaded > 0) {
-        uploadProgress.setStageCompleted('photos', `${photosUploaded} uploaded`);
-        console.log(`📸 Uploaded ${photosUploaded} photos to Storage`);
-      } else {
-        uploadProgress.setStageCompleted('photos', 'compressed');
-      }
-    }
-    
-    uploadProgress.setProgress(65);
-    
-    // Stage 3: Save route document
-    uploadProgress.setStageActive('route');
-    uploadProgress.setStatus('Saving route to Firestore...');
     
     // Prepare route document for Firestore
     const routeDoc = {
@@ -1122,19 +1048,15 @@ async saveRouteToCloud(routeData, routeInfo, accessibilityData, authController) 
       elapsedTime: routeInfo.elapsedTime || 0,
       originalDate: routeInfo.date,
       
-      // Route data (with photos as Storage URLs)
-      routeData: processedRouteData,
-      
-      // Storage reference if photos were uploaded
-      storageRouteId: routeId || null,
+      // Route data
+      routeData: routeData,
       
       // Statistics for quick access
       stats: {
-        locationPoints: processedRouteData.filter(p => p.type === 'location').length,
-        photos: processedRouteData.filter(p => p.type === 'photo').length,
-        notes: processedRouteData.filter(p => p.type === 'text').length,
-        totalDataPoints: processedRouteData.length,
-        photosInStorage: photosUploaded
+        locationPoints: routeData.filter(p => p.type === 'location').length,
+        photos: routeData.filter(p => p.type === 'photo').length,
+        notes: routeData.filter(p => p.type === 'text').length,
+        totalDataPoints: routeData.length
       },
       
       // Accessibility information
@@ -1148,14 +1070,6 @@ async saveRouteToCloud(routeData, routeInfo, accessibilityData, authController) 
       }
     };
 
-    // Final size check
-    const finalSize = JSON.stringify(routeDoc).length;
-    console.log(`📊 Final document size: ${Math.round(finalSize/1024)} KB`);
-    
-    if (finalSize > 1000000) {
-      throw new Error(`Route data still too large (${Math.round(finalSize/1024)} KB). Please reduce photo count.`);
-    }
-
     // Save route to cloud with timeout
     const savePromise = addDoc(collection(db, 'routes'), routeDoc);
     const timeoutPromise = new Promise((_, reject) => 
@@ -1165,30 +1079,15 @@ async saveRouteToCloud(routeData, routeInfo, accessibilityData, authController) 
     const docRef = await Promise.race([savePromise, timeoutPromise]);
     console.log('✅ Route saved to cloud with ID:', docRef.id);
     
-    uploadProgress.setStageCompleted('route', docRef.id.slice(0, 8) + '...');
-    uploadProgress.setProgress(80);
+    // Generate trail guide HTML
+    await this.generateTrailGuide(docRef.id, routeData, routeInfo, accessibilityData, authController);
     
-    // Stage 4: Generate trail guide
-    uploadProgress.setStageActive('guide');
-    uploadProgress.setStatus('Generating trail guide...');
-    
-    await this.generateTrailGuide(docRef.id, processedRouteData, routeInfo, accessibilityData, authController);
-    
-    uploadProgress.setStageCompleted('guide');
-    uploadProgress.setProgress(100);
-    
-    // Show success
-    uploadProgress.showSuccess(`"${routeInfo.name}" saved successfully!`);
-    uploadProgress.hide(2000);
+    this.showSuccessMessage(`✅ "${routeInfo.name}" saved to cloud with trail guide! ☁️`);
     
     return docRef.id;
     
   } catch (error) {
     console.error('❌ Cloud save failed:', error);
-    
-    // Show error in modal
-    uploadProgress.showError(error.message);
-    uploadProgress.hide(3000);
     
     // Check if it's a network-related error
     const isNetworkError = !navigator.onLine || 
@@ -1198,9 +1097,7 @@ async saveRouteToCloud(routeData, routeInfo, accessibilityData, authController) 
       error.code === 'unavailable';
     
     if (isNetworkError) {
-      toast.warningKey('networkSavedLocally', { duration: 5000 });
-    } else if (error.message.includes('too large')) {
-      toast.errorKey('routeDataTooLarge', { duration: 5000 });
+      toast.warning('Network error - route saved locally. Will sync when online.', { duration: 5000 });
     }
     
     throw error;
