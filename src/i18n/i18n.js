@@ -160,6 +160,9 @@ class I18nManager {
       document.body.classList.remove('rtl');
     }
 
+    // IMPORTANT: Enforce LTR on navigation and tracker controls
+    this.enforceLTRLayout();
+
     // Save preference
     if (save) {
       localStorage.setItem('accessNature_language', lang);
@@ -174,6 +177,48 @@ class I18nManager {
 
     console.log(`🌐 Language set to: ${lang} (dir: ${dir})`);
     return true;
+  }
+
+  /**
+   * Enforce LTR layout on specific elements that should never be RTL
+   * (navigation, tracker controls, buttons, etc.)
+   */
+  enforceLTRLayout() {
+    const ltrSelectors = [
+      // Navigation
+      '.top-nav',
+      '.global-nav',
+      '.unified-nav',
+      'nav',
+      '.nav-menu',
+      '.nav-brand',
+      '.nav-auth-indicator',
+      // Tracker controls
+      '#topControlBar',
+      '#secondaryRow',
+      '#rightControls',
+      '#leftControls',
+      '.tracker-controls',
+      '.control-row',
+      '.top-controls-bar',
+      // Display elements
+      '.elevation-display',
+      '.heading-display',
+      '#accessibilitySurveyBtn',
+      // Voice/FAB elements
+      '.voice-control-fab',
+      '.voice-overlay',
+      // Modals/banners created dynamically
+      '#accessibility-reminder',
+      '#survey-prompt-overlay'
+    ];
+    
+    ltrSelectors.forEach(selector => {
+      document.querySelectorAll(selector).forEach(el => {
+        el.style.direction = 'ltr';
+        el.setAttribute('dir', 'ltr');
+      });
+    });
   }
 
   /**
@@ -339,33 +384,55 @@ class I18nManager {
   translatePage() {
     // Translate text content
     document.querySelectorAll('[data-i18n]').forEach(el => {
+      // Skip elements marked to not translate
+      if (el.closest('[data-no-i18n]')) return;
+      
       const key = el.getAttribute('data-i18n');
       if (key) {
-        el.textContent = this.t(key);
+        const translation = this.t(key);
+        // Only apply if translation was found (not returning the key itself)
+        if (translation && translation !== key) {
+          el.textContent = translation;
+        }
       }
     });
 
     // Translate innerHTML (for elements with embedded HTML)
     document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      if (el.closest('[data-no-i18n]')) return;
+      
       const key = el.getAttribute('data-i18n-html');
       if (key) {
-        el.innerHTML = this.t(key);
+        const translation = this.t(key);
+        if (translation && translation !== key) {
+          el.innerHTML = translation;
+        }
       }
     });
 
     // Translate placeholders
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      if (el.closest('[data-no-i18n]')) return;
+      
       const key = el.getAttribute('data-i18n-placeholder');
       if (key) {
-        el.placeholder = this.t(key);
+        const translation = this.t(key);
+        if (translation && translation !== key) {
+          el.placeholder = translation;
+        }
       }
     });
 
     // Translate aria-labels
     document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+      if (el.closest('[data-no-i18n]')) return;
+      
       const key = el.getAttribute('data-i18n-aria');
       if (key) {
-        el.setAttribute('aria-label', this.t(key));
+        const translation = this.t(key);
+        if (translation && translation !== key) {
+          el.setAttribute('aria-label', translation);
+        }
       }
     });
 
@@ -395,6 +462,9 @@ class I18nManager {
       });
     });
 
+    // Enforce LTR on nav/controls after translation
+    this.enforceLTRLayout();
+    
     console.log('🌐 Page translated');
   }
 
