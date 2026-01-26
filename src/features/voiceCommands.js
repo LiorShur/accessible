@@ -199,21 +199,21 @@ class VoiceCommandsManager {
       const style = document.createElement('style');
       style.id = 'voice-commands-styles';
       style.textContent = `
-        /* Voice Control Floating Button */
+        /* Voice Control Floating Button - positioned in right FABs section */
         .voice-control-fab {
           position: fixed;
-          bottom: 160px;
-          left: 12px;
-          width: 56px;
-          height: 56px;
+          right: 12px;
+          top: calc(50% + 120px);
+          width: 44px;
+          height: 44px;
           border-radius: 50%;
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          border: none;
+          border: 1px solid #333;
           color: white;
-          font-size: 24px;
+          font-size: 20px;
           cursor: pointer;
           box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-          z-index: 9999;
+          z-index: 700;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -372,10 +372,10 @@ class VoiceCommandsManager {
         /* Mobile adjustments */
         @media (max-width: 480px) {
           .voice-control-fab {
-            bottom: 180px;
-            width: 52px;
-            height: 52px;
-            font-size: 22px;
+            top: calc(50% + 110px);
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
           }
           
           .voice-overlay {
@@ -391,7 +391,7 @@ class VoiceCommandsManager {
         
         /* Fullscreen mode adjustment */
         body.fullscreen-mode .voice-control-fab {
-          bottom: 100px;
+          top: calc(50% + 80px);
         }
       `;
       document.head.appendChild(style);
@@ -769,6 +769,7 @@ class VoiceCommandsManager {
   
   /**
    * Text-to-speech feedback
+   * Pauses recognition during speech to prevent self-hearing loop
    */
   speak(text) {
     if (!this.synthesis) return;
@@ -776,11 +777,47 @@ class VoiceCommandsManager {
     // Cancel any ongoing speech
     this.synthesis.cancel();
     
+    // Pause recognition while speaking to prevent hearing ourselves
+    const wasListening = this.isListening && !this.isPaused;
+    if (wasListening && this.recognition) {
+      try {
+        this.recognition.stop();
+      } catch (e) {
+        // Ignore
+      }
+    }
+    
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = this.getLanguage();
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
+    
+    // Resume recognition after speech ends
+    utterance.onend = () => {
+      if (wasListening && this.isListening && !this.isPaused) {
+        setTimeout(() => {
+          try {
+            this.recognition.start();
+          } catch (e) {
+            // May already be running
+          }
+        }, 300); // Brief delay before resuming
+      }
+    };
+    
+    // Also handle errors
+    utterance.onerror = () => {
+      if (wasListening && this.isListening && !this.isPaused) {
+        setTimeout(() => {
+          try {
+            this.recognition.start();
+          } catch (e) {
+            // May already be running
+          }
+        }, 300);
+      }
+    };
     
     this.synthesis.speak(utterance);
   }
