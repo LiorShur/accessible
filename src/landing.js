@@ -6,15 +6,12 @@ import { offlineIndicator } from './ui/offlineIndicator.js';
 import { loadingStates } from './ui/loadingStates.js';
 import { gamificationUI } from './ui/gamificationUI.js';
 import { mobilityProfileUI } from './ui/mobilityProfileUI.js';
-import { announcementsUI } from './ui/announcementsUI.js';
-import { topToolbarUI } from './ui/topToolbarUI.js';
 import { communityChallenges } from './features/communityChallenges.js';
 import { accessibilityRating } from './features/accessibilityRating.js';
 import { trailSearch } from './features/trailSearch.js';
 import { showError, getErrorMessage } from './utils/errorMessages.js';
 import { userService } from './services/userService.js';
 import { betaFeedback } from './utils/betaFeedback.js';
-import { i18n, t } from './i18n/i18n.js';
 // import { initializeAccessReport } from './js/modules/access-report-main.js';
 
 // Early global function stubs (replaced once controller initializes)
@@ -23,11 +20,7 @@ window.openTrailBrowser = () => {
   setTimeout(() => window.landingController?.openTrailBrowser(), 100);
 };
 window.closeTrailBrowser = () => window.landingController?.closeTrailBrowser();
-window.openTracker = () => window.landingController?.openTracker() || (window.location.href = 'tracker.html');
-window.closeTrackModal = () => window.landingController?.closeTrackModal();
-window.goToTracker = () => window.landingController?.goToTracker() || (window.location.href = 'tracker.html');
-window.toggleSkipTrackModal = (checked) => window.landingController?.toggleSkipTrackModal(checked);
-window.setTrackModalPref = (pref) => window.landingController?.setTrackModalPref(pref);
+window.openTracker = () => { window.location.href = 'tracker.html'; };
 window.quickSearch = () => window.landingController?.quickSearch();
 window.searchTrails = () => window.landingController?.searchTrails();
 window.applyFilters = () => window.landingController?.applyFilters();
@@ -52,38 +45,6 @@ class LandingPageController {
     this.displayedFeaturedCount = 0;  // How many currently shown
     this.featuredBatchSize = 6;       // Load 6 at a time
     this.publicGuidesCache = null;    // Cache for shared queries
-  }
-
-  /**
-   * Translate accessibility database values to current language
-   */
-  translateAccessibilityValue(value) {
-    if (!value) return '';
-    
-    // Map database values to translation keys
-    const valueMap = {
-      // Wheelchair Access
-      'Fully Accessible': 'accessibility.fullyAccessible',
-      'Partially Accessible': 'accessibility.partiallyAccessible',
-      'Not Accessible': 'accessibility.notAccessible',
-      // Difficulty
-      'Easy': 'accessibility.easy',
-      'Moderate': 'accessibility.difficultModerate',
-      'Difficult': 'accessibility.difficult',
-      // Surface types
-      'Paved': 'accessibility.paved',
-      'Asphalt': 'accessibility.asphalt',
-      'Concrete': 'accessibility.concrete',
-      'Gravel': 'accessibility.gravel',
-      'Dirt': 'accessibility.dirt',
-      'Sand': 'accessibility.sand',
-      'Grass': 'accessibility.grass',
-      'Boardwalk': 'accessibility.boardwalk',
-      'Mixed': 'accessibility.mixed'
-    };
-    
-    const key = valueMap[value];
-    return key ? t(key) : value;
   }
 
   async initialize() {
@@ -204,14 +165,10 @@ class LandingPageController {
       if (userResult?.count) totalItems += userResult.count;
       if (userResult?.warning) warnings.push('user');
       
-      // Load announcements feed (non-blocking)
-      console.log('📰 Loading announcements feed...');
-      this.loadAnnouncementsFeed().catch(e => console.warn('Announcements feed load failed:', e));
-      
       // Check if we actually got data
       if (totalItems === 0 && warnings.length > 0) {
         console.warn('⚠️ All queries returned 0 items - likely offline or empty cache');
-        toast.warningKey('dataLoadFailed');
+        toast.warning('Unable to load data. Check your connection.');
       } else if (totalItems > 0) {
         console.log(`✅ All data loaded successfully (${totalItems} items)`);
       } else {
@@ -237,7 +194,7 @@ class LandingPageController {
       
       // Show defaults on final failure
       this.hideLoadingIndicators();
-      toast.errorKey('someDataFailed');
+      toast.error('Some data failed to load. Pull to refresh.');
     }
   }
 
@@ -383,7 +340,6 @@ class LandingPageController {
     window.openTrailBrowser = () => this.openTrailBrowser();
     window.closeTrailBrowser = () => this.closeTrailBrowser();
     window.openTracker = () => this.openTracker();
-    window.closeTrackModal = () => this.closeTrackModal();
     window.quickSearch = () => this.quickSearch();
     window.searchTrails = () => this.searchTrails();
     window.applyFilters = () => this.applyFilters();
@@ -420,175 +376,8 @@ class LandingPageController {
   }
 
   openTracker() {
-    // Check if user wants to skip modal
-    const skipModal = localStorage.getItem('accessNature_skipTrackModal') === 'true';
-    if (skipModal) {
-      window.location.href = 'tracker.html';
-      return;
-    }
-    
-    // Show track trail modal
-    const modal = document.getElementById('trackTrailModal');
-    if (modal) {
-      // Apply current language direction to entire modal and container
-      const currentLang = localStorage.getItem('accessNature_language') || 'en';
-      const isRTL = currentLang === 'he';
-      const dir = isRTL ? 'rtl' : 'ltr';
-      
-      // Set dir on outer modal div
-      modal.setAttribute('dir', dir);
-      
-      // Also set dir on modal container for better inheritance
-      const modalContainer = modal.querySelector('.track-modal');
-      if (modalContainer) {
-        modalContainer.setAttribute('dir', dir);
-        modalContainer.style.direction = dir;
-        modalContainer.style.textAlign = isRTL ? 'right' : 'left';
-      }
-      
-      // Apply RTL styles to feature items programmatically
-      const featureItems = modal.querySelectorAll('.feature-item');
-      featureItems.forEach(item => {
-        item.style.flexDirection = isRTL ? 'row-reverse' : 'row';
-        item.style.textAlign = isRTL ? 'right' : 'left';
-        
-        const icon = item.querySelector('.feature-icon');
-        if (icon) {
-          icon.style.marginLeft = isRTL ? '12px' : '0';
-          icon.style.marginRight = isRTL ? '0' : '12px';
-        }
-        
-        const text = item.querySelector('.feature-text');
-        if (text) {
-          text.style.textAlign = isRTL ? 'right' : 'left';
-          text.style.direction = dir;
-        }
-      });
-      
-      // Apply RTL styles to modal preference options
-      const prefOptions = modal.querySelectorAll('.modal-preference-option');
-      prefOptions.forEach(opt => {
-        opt.style.flexDirection = isRTL ? 'row-reverse' : 'row';
-        opt.style.textAlign = isRTL ? 'right' : 'left';
-        opt.style.direction = dir;
-      });
-      
-      // Apply RTL to modal stats
-      const modalStats = modal.querySelector('.modal-stats');
-      if (modalStats) {
-        modalStats.style.flexDirection = isRTL ? 'row-reverse' : 'row';
-      }
-      
-      // Apply RTL to modal header
-      const modalHeader = modal.querySelector('.modal-header');
-      if (modalHeader) {
-        modalHeader.style.flexDirection = isRTL ? 'row-reverse' : 'row';
-      }
-      
-      modal.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
-      
-      // Update stats in modal from userService or localStorage
-      this.updateTrackModalStats();
-      
-      // Restore radio button state from localStorage
-      const skipPref = localStorage.getItem('accessNature_skipTrackModal') === 'true';
-      const showRadio = document.getElementById('showModalAlways');
-      const skipRadio = document.getElementById('skipModalNext');
-      if (showRadio && skipRadio) {
-        showRadio.checked = !skipPref;
-        skipRadio.checked = skipPref;
-      }
-      
-      // Translate modal content
-      if (window.i18n?.translatePage) {
-        window.i18n.translatePage();
-      }
-    } else {
-      // Fallback: redirect to tracker
-      window.location.href = 'tracker.html';
-    }
-  }
-  
-  async updateTrackModalStats() {
-    const modalRoutes = document.getElementById('modalTotalRoutes');
-    const modalDistance = document.getElementById('modalTotalDistance');
-    
-    // Try to get from userService first (Firebase data)
-    if (window.userService?.userData) {
-      const usage = window.userService.userData.usage || {};
-      const engagement = window.userService.userData.engagement || {};
-      const routeCount = usage.savedRoutes || 0;
-      const totalDist = engagement.totalTrackedDistance || 0;
-      if (modalRoutes) modalRoutes.textContent = routeCount;
-      if (modalDistance) modalDistance.textContent = totalDist.toFixed(1);
-      console.log('[TrackModal] Stats from userService:', { routeCount, totalDist });
-      return;
-    }
-    
-    // Try IndexedDB next
-    try {
-      const { RouteDB } = await import('./core/indexeddb.js');
-      const routeDB = new RouteDB();
-      await routeDB.init();
-      const routes = await routeDB.getAllRoutes();
-      if (routes && routes.length > 0) {
-        const routeCount = routes.length;
-        const totalDist = routes.reduce((sum, r) => sum + (r.totalDistance || 0), 0);
-        if (modalRoutes) modalRoutes.textContent = routeCount;
-        if (modalDistance) modalDistance.textContent = totalDist.toFixed(1);
-        console.log('[TrackModal] Stats from IndexedDB:', { routeCount, totalDist });
-        return;
-      }
-    } catch (e) {
-      console.warn('[TrackModal] IndexedDB not available:', e);
-    }
-    
-    // Fallback to localStorage
-    try {
-      const sessions = JSON.parse(localStorage.getItem('sessions') || '[]');
-      const routeCount = sessions.length;
-      const totalDist = sessions.reduce((sum, s) => sum + (s.totalDistance || 0), 0);
-      if (modalRoutes) modalRoutes.textContent = routeCount;
-      if (modalDistance) modalDistance.textContent = totalDist.toFixed(1);
-      console.log('[TrackModal] Stats from localStorage:', { routeCount, totalDist });
-    } catch (e) {
-      console.warn('[TrackModal] Could not load track modal stats:', e);
-    }
-  }
-  
-  closeTrackModal() {
-    const modal = document.getElementById('trackTrailModal');
-    if (modal) {
-      modal.classList.add('hidden');
-      document.body.style.overflow = '';
-    }
-  }
-  
-  goToTracker() {
-    // Save preference based on radio selection before navigating
-    const skipRadio = document.getElementById('skipModalNext');
-    if (skipRadio?.checked) {
-      localStorage.setItem('accessNature_skipTrackModal', 'true');
-    } else {
-      localStorage.removeItem('accessNature_skipTrackModal');
-    }
+    // Redirect to main tracker app
     window.location.href = 'tracker.html';
-  }
-  
-  setTrackModalPref(pref) {
-    // Save preference immediately when radio changes
-    if (pref === 'skip') {
-      localStorage.setItem('accessNature_skipTrackModal', 'true');
-    } else {
-      localStorage.removeItem('accessNature_skipTrackModal');
-    }
-    console.log('Track modal preference set to:', pref);
-  }
-  
-  toggleSkipTrackModal(checked) {
-    // Legacy function for backwards compatibility
-    this.setTrackModalPref(checked ? 'skip' : 'show');
   }
 
   // Search Functions
@@ -597,7 +386,7 @@ class LandingPageController {
     const searchTerm = searchInput?.value?.trim();
     
     if (!searchTerm) {
-      toast.warningKey('enterSearchTerm');
+      toast.warning('Please enter a search term');
       return;
     }
 
@@ -737,7 +526,7 @@ async searchTrails() {
       <div class="trail-result-card" onclick="viewTrailGuide('${guide.id}')">
         <div class="trail-result-header">
           <div class="trail-result-name">${guide.routeName}</div>
-          <div class="trail-result-author">${t('trailBrowser.by')} ${guide.userEmail}</div>
+          <div class="trail-result-author">by ${guide.userEmail}</div>
           <div class="trail-result-date">${date}</div>
         </div>
         
@@ -745,24 +534,24 @@ async searchTrails() {
           <div class="trail-result-stats">
             <div class="trail-stat">
               <span class="trail-stat-value">${(metadata.totalDistance || 0).toFixed(1)}</span>
-              <span class="trail-stat-label">${t('trailBrowser.km')}</span>
+              <span class="trail-stat-label">km</span>
             </div>
             <div class="trail-stat">
               <span class="trail-stat-value">${metadata.locationCount || 0}</span>
-              <span class="trail-stat-label">${t('trailBrowser.gpsPoints')}</span>
+              <span class="trail-stat-label">GPS Points</span>
             </div>
           </div>
           
           <div class="trail-accessibility-tags">
-            ${accessibility.wheelchairAccess ? `<span class="accessibility-tag">♿ ${this.translateAccessibilityValue(accessibility.wheelchairAccess)}</span>` : ''}
-            ${accessibility.difficulty ? `<span class="accessibility-tag">🥾 ${this.translateAccessibilityValue(accessibility.difficulty)}</span>` : ''}
-            ${accessibility.trailSurface ? `<span class="accessibility-tag">🛤️ ${this.translateAccessibilityValue(accessibility.trailSurface)}</span>` : ''}
+            ${accessibility.wheelchairAccess ? `<span class="accessibility-tag">♿ ${accessibility.wheelchairAccess}</span>` : ''}
+            ${accessibility.difficulty ? `<span class="accessibility-tag">🥾 ${accessibility.difficulty}</span>` : ''}
+            ${accessibility.trailSurface ? `<span class="accessibility-tag">🛤️ ${accessibility.trailSurface}</span>` : ''}
           </div>
           
           <div class="trail-community-stats">
-            <span>👁️ ${community.views || 0} ${t('trailBrowser.views')}</span>
-            <span>📷 ${metadata.photoCount || 0} ${t('trailBrowser.photos')}</span>
-            <span>📝 ${metadata.noteCount || 0} ${t('trailBrowser.notes')}</span>
+            <span>👁️ ${community.views || 0} views</span>
+            <span>📷 ${metadata.photoCount || 0} photos</span>
+            <span>📝 ${metadata.noteCount || 0} notes</span>
           </div>
         </div>
       </div>
@@ -782,7 +571,7 @@ async searchTrails() {
       const guideSnap = await getDoc(guideRef);
       
       if (!guideSnap.exists()) {
-        toast.errorKey('trailNotFound');
+        toast.error('Trail guide not found');
         return;
       }
       
@@ -793,7 +582,7 @@ async searchTrails() {
       const canView = guideData.isPublic || (currentUser && currentUser.uid === guideData.userId);
       
       if (!canView) {
-        toast.errorKey('trailPrivate');
+        toast.error('This trail guide is private');
         return;
       }
       
@@ -812,12 +601,12 @@ async searchTrails() {
       if (guideData.htmlContent) {
         this.showTrailGuide(guideData);
       } else {
-        toast.errorKey('trailContentUnavailable');
+        toast.error('Trail guide content not available');
       }
       
     } catch (error) {
       console.error('❌ Failed to view trail guide:', error);
-      toast.errorKey('trailLoadFailed');
+      toast.error('Failed to load trail guide');
     }
   }
 
@@ -931,81 +720,6 @@ calculateAndDisplayStats(guides) {
   this.animateNumber('totalKm', Math.round(totalKm));
   this.animateNumber('accessibleTrails', accessibleTrails);
   this.animateNumber('totalUsers', uniqueUsers.size);
-}
-
-// Load recent announcements for the "What's New" feed
-async loadAnnouncementsFeed() {
-  const feedContainer = document.getElementById('announcementsFeed');
-  if (!feedContainer) return;
-  
-  try {
-    const { collection, query, orderBy, limit, getDocs } = 
-      await import("https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js");
-    
-    const announcementsQuery = query(
-      collection(db, 'announcements'),
-      orderBy('createdAt', 'desc'),
-      limit(5)
-    );
-    
-    const snapshot = await getDocs(announcementsQuery);
-    
-    if (snapshot.empty) {
-      feedContainer.innerHTML = `
-        <div class="announcement-item">
-          <div class="ann-title">Welcome to Accessible! 🎉</div>
-          <div class="ann-date">Start tracking trails and reporting issues to help make outdoor spaces accessible for everyone.</div>
-        </div>
-      `;
-      return;
-    }
-    
-    let html = '';
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const date = data.createdAt?.toDate?.() || new Date(data.createdAt);
-      const formattedDate = this.formatRelativeDate(date);
-      
-      html += `
-        <div class="announcement-item">
-          <div class="ann-title">${this.escapeHtml(data.title || 'Announcement')}</div>
-          <div class="ann-date">${formattedDate}</div>
-        </div>
-      `;
-    });
-    
-    feedContainer.innerHTML = html;
-    
-  } catch (error) {
-    console.warn('Failed to load announcements feed:', error);
-    feedContainer.innerHTML = `
-      <div class="announcement-item">
-        <div class="ann-title">Welcome to Accessible! 🎉</div>
-        <div class="ann-date">Explore accessible trails and report accessibility issues in your community.</div>
-      </div>
-    `;
-  }
-}
-
-// Format date as relative time (e.g., "2 days ago")
-formatRelativeDate(date) {
-  const now = new Date();
-  const diffMs = now - date;
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-  return `${Math.floor(diffDays / 365)} years ago`;
-}
-
-// Escape HTML to prevent XSS
-escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
 }
 
 // UPDATED: Load featured trails using cached data if available
@@ -1217,17 +931,17 @@ updateLoadMoreButton() {
         <div class="trail-info">
           <div class="trail-name">${trail.routeName}</div>
           <div class="trail-meta">
-            <span>📍 ${accessibility.location || t('trailBrowser.locationNotSpecified') || 'Location not specified'}</span>
+            <span>📍 ${accessibility.location || 'Location not specified'}</span>
             <span>📅 ${new Date(trail.generatedAt).toLocaleDateString()}</span>
           </div>
           <div class="trail-accessibility">
-            ${accessibility.wheelchairAccess ? `<span class="accessibility-badge">♿ ${this.translateAccessibilityValue(accessibility.wheelchairAccess)}</span>` : ''}
-            ${accessibility.difficulty ? `<span class="accessibility-badge">🥾 ${this.translateAccessibilityValue(accessibility.difficulty)}</span>` : ''}
+            ${accessibility.wheelchairAccess ? `<span class="accessibility-badge">♿ ${accessibility.wheelchairAccess}</span>` : ''}
+            ${accessibility.difficulty ? `<span class="accessibility-badge">🥾 ${accessibility.difficulty}</span>` : ''}
           </div>
           <div class="trail-stats">
-            <span>📏 ${(metadata.totalDistance || 0).toFixed(1)} ${t('trailBrowser.km')}</span>
-            <span>👁️ ${community.views || 0} ${t('trailBrowser.views')}</span>
-            <span>📷 ${metadata.photoCount || 0} ${t('trailBrowser.photos')}</span>
+            <span>📏 ${(metadata.totalDistance || 0).toFixed(1)} km</span>
+            <span>👁️ ${community.views || 0} views</span>
+            <span>📷 ${metadata.photoCount || 0} photos</span>
           </div>
           <div class="trail-actions">
             <button class="like-trail-btn ${hasLiked ? 'liked' : ''}" 
@@ -1240,10 +954,10 @@ updateLoadMoreButton() {
             <button class="share-trail-btn" 
                     onclick="event.stopPropagation(); shareTrail('${trail.id}', '${encodeURIComponent(trail.routeName)}')"
                     aria-label="Share this trail">
-              📤 ${t('trailBrowser.share') || 'Share'}
+              📤 Share
             </button>
             <button class="view-trail-btn" onclick="viewTrailGuide('${trail.id}')">
-              ${t('trailBrowser.viewGuide') || 'View Guide'}
+              View Guide
             </button>
           </div>
         </div>
@@ -1259,7 +973,7 @@ updateLoadMoreButton() {
       // Check auth
       const { auth, db } = await import('../firebase-setup.js');
       if (!auth.currentUser) {
-        toast.infoKey('signInToLike');
+        toast.info('Please sign in to like trails');
         return;
       }
 
@@ -1321,7 +1035,7 @@ updateLoadMoreButton() {
 
     } catch (error) {
       console.error('Failed to like trail:', error);
-      toast.errorKey('likeFailed');
+      toast.error('Failed to update like. Please try again.');
       // Revert UI on error
       this.displayFeaturedBatch();
     }
@@ -1342,7 +1056,7 @@ updateLoadMoreButton() {
           text: shareText,
           url: shareUrl
         });
-        toast.successKey('trailShared');
+        toast.success('Trail shared!');
         return;
       } catch (err) {
         if (err.name !== 'AbortError') {
@@ -1354,7 +1068,7 @@ updateLoadMoreButton() {
     // Fallback to clipboard
     try {
       await navigator.clipboard.writeText(shareUrl);
-      toast.successKey('linkCopied');
+      toast.success('Link copied to clipboard!');
     } catch (err) {
       // Final fallback - show modal with link
       this.showShareModal(shareUrl, decodeURIComponent(trailName));
@@ -1521,39 +1235,6 @@ loadLocalStats() {
   this.updateElement('totalDistance', totalDistance.toFixed(1));
   console.log(`👤 Local stats: ${totalRoutes} routes, ${totalDistance.toFixed(1)} km`);
 }
-
-  /**
-   * Update the global nav profile button with user state
-   * @param {Object|null} user - Firebase user object or null for signed out
-   */
-  updateGlobalNavProfile(user) {
-    const updateNav = () => {
-      const profileItem = document.getElementById('globalNavProfile');
-      const profileLabel = document.getElementById('profileLabel');
-      
-      if (profileItem && profileLabel) {
-        if (user) {
-          const displayName = user.email?.split('@')[0] || user.displayName || 'User';
-          const truncatedName = displayName && displayName.length > 10 ? displayName.substring(0, 10) + '…' : displayName;
-          profileItem.classList.add('signed-in');
-          if (truncatedName) profileLabel.textContent = truncatedName;
-        } else {
-          profileItem.classList.remove('signed-in');
-          profileLabel.textContent = 'Sign In';
-        }
-        return true;
-      }
-      return false;
-    };
-    
-    // Try immediately
-    if (updateNav()) return;
-    
-    // Retry with delays (global nav might not be initialized yet)
-    [100, 300, 500, 1000, 2000].forEach(delay => {
-      setTimeout(updateNav, delay);
-    });
-  }
 
   // Utility Functions
   updateElement(id, value) {
@@ -1876,15 +1557,9 @@ Happy trail mapping! 🥾`);
       
       // Show profile link in nav
       if (profileNavLink) {
-        profileNavLink.style.display = 'inline-flex';
+        profileNavLink.style.display = 'block';
         console.log('📍 Profile nav link shown');
       }
-      
-      // Initialize announcements UI
-      setTimeout(() => {
-        announcementsUI?.initialize();
-      }, 1000);
-      
       if (navAuthBtn) navAuthBtn.textContent = 'Sign Out';
       
       // Show My Trails section
@@ -1908,27 +1583,13 @@ Happy trail mapping! 🥾`);
         try {
           await userService.initializeUser(authStatus.user);
           console.log('🏅 UserService initialized for gamification');
-          
-          // Refresh community challenges with new user data
-          if (window.communityChallenges) {
-            await window.communityChallenges.refresh();
-          }
         } catch (error) {
           console.warn('⚠️ UserService initialization failed:', error);
         }
-      } else {
-        // UserService already initialized, just refresh challenges
-        if (window.communityChallenges) {
-          await window.communityChallenges.refresh();
-        }
       }
       
-      // Load user's trails and update stats
+      // Load user's trails
       this.loadMyTrails();
-      this.updateUserStats(); // Also update routes mapped counter
-      
-      // Update global nav profile button
-      this.updateGlobalNavProfile(authStatus.user);
       
     } else {
       userInfo?.classList.add('hidden');
@@ -1938,16 +1599,12 @@ Happy trail mapping! 🥾`);
       if (profileNavLink) {
         profileNavLink.style.display = 'none';
       }
-      
       if (navAuthBtn) navAuthBtn.textContent = 'Sign In';
       
       // Hide My Trails section
       if (myTrailsSection) {
         myTrailsSection.style.display = 'none';
       }
-      
-      // Update global nav profile button
-      this.updateGlobalNavProfile(null);
       
       userService.reset();
     }
@@ -2103,18 +1760,30 @@ Happy trail mapping! 🥾`);
    */
   showMyTrailGuides() {
     if (!this.myTrailGuides || this.myTrailGuides.length === 0) {
-      toast.warningKey('noTrailGuides');
+      toast.warning('No trail guides found. Record a trail first!');
       return;
     }
     
     console.log(`📚 Showing ${this.myTrailGuides.length} trail guides in modal`);
+    
+    // Get current language for translations
+    const lang = window.i18n?.getLanguage() || localStorage.getItem('accessNature_language') || 'en';
+    const isHebrew = lang === 'he';
+    const t = {
+      title: isHebrew ? '📚 מדריכי השבילים שלי' : '📚 My Trail Guides',
+      clickToView: isHebrew ? 'לחץ על מדריך כדי לצפות בפרטים המלאים' : 'Click a trail guide to view full details',
+      close: isHebrew ? 'סגור' : 'Close',
+      public: isHebrew ? '🌍 ציבורי' : '🌍 Public',
+      private: isHebrew ? '🔒 פרטי' : '🔒 Private',
+      unnamed: isHebrew ? 'שביל ללא שם' : 'Unnamed Trail'
+    };
     
     // Store guides globally for onclick access
     window._tempGuides = this.myTrailGuides;
     
     // Create modal content - list of guides sorted by date (newest first)
     const modalContent = this.myTrailGuides.map((guide, index) => {
-      const name = guide.routeName || guide.title || guide.name || 'Unnamed Trail';
+      const name = guide.routeName || guide.title || guide.name || t.unnamed;
       
       // Extract distance from htmlContent
       let distance = 0;
@@ -2138,42 +1807,43 @@ Happy trail mapping! 🥾`);
       } else {
         date = new Date();
       }
-      const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      const dateLocale = isHebrew ? 'he-IL' : 'en-US';
+      const dateStr = date.toLocaleDateString(dateLocale, { month: 'short', day: 'numeric', year: 'numeric' });
       
       const isPublic = guide.visibility === 'public' || guide.isPublic;
-      const visibilityLabel = isPublic ? `🌍 ${t('index.public')}` : `🔒 ${t('index.private')}`;
+      const escapedName = this.escapeHtml(name);
       
       // Use index to access from window._tempGuides
       return `
         <div class="guide-list-item" 
              onclick="window.landingController?.openGuideByIndex(${index})"
-             style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); cursor: pointer; transition: background 0.2s;"
-             onmouseover="this.style.background='rgba(102,126,234,0.1)'" 
-             onmouseout="this.style.background=''">
-          <span style="font-size: 1.8rem;">📚</span>
-          <div style="flex: 1; min-width: 0;">
-            <div style="font-weight: 600; color: #fff; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${this.escapeHtml(name)}</div>
-            <div style="font-size: 0.85rem; color: rgba(255,255,255,0.5);">
-              📏 ${distance.toFixed(1)} ${t('trailBrowser.km')} • 📅 ${dateStr} • ${visibilityLabel}
+             style="display: flex !important; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #e5e7eb; cursor: pointer; transition: background 0.2s; direction: ltr; background: #ffffff;"
+             onmouseover="this.style.background='#f0fdf4'" 
+             onmouseout="this.style.background='#ffffff'">
+          <span style="font-size: 1.8rem; flex-shrink: 0; display: inline-block;">📚</span>
+          <div style="flex: 1; min-width: 0; overflow: hidden; display: block !important;">
+            <div class="guide-item-name" style="font-weight: 600 !important; color: #1f2937 !important; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 1rem !important; background: transparent !important; display: block !important; visibility: visible !important;">${escapedName}</div>
+            <div class="guide-item-stats" style="font-size: 0.85rem !important; color: #6b7280 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: transparent !important; display: block !important; visibility: visible !important;">
+              📏 ${distance.toFixed(1)} km • 📅 ${dateStr} • ${isPublic ? t.public : t.private}
             </div>
           </div>
-          <span style="color: #667eea; font-size: 1.2rem;">→</span>
+          <span style="color: #2c5530; font-size: 1.2rem; flex-shrink: 0; display: inline-block;">→</span>
         </div>
       `;
     }).join('');
     
     // Use html property for proper rendering
     modal.show({
-      title: `📚 ${t('index.myTrailGuides')}`,
+      title: t.title,
       html: `
         <div id="guideListContainer" style="max-height: 60vh; overflow-y: auto; margin: -16px; margin-top: 0;">
           ${modalContent}
         </div>
-        <p style="text-align: center; color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08);">
-          ${t('index.clickToViewDetails')}
+        <p style="text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 16px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+          ${t.clickToView}
         </p>
       `,
-      buttons: [{ label: t('index.close'), action: 'close', variant: 'secondary' }]
+      buttons: [{ label: t.close, action: 'close', variant: 'secondary' }]
     });
   }
 
@@ -2183,52 +1853,37 @@ Happy trail mapping! 🥾`);
   openGuideByIndex(index) {
     console.log('📚 openGuideByIndex called:', index);
     
-    // Close all modals - try multiple approaches
-    // 1. Use modal system's closeAll
-    try {
-      if (modal && typeof modal.closeAll === 'function') {
-        console.log('📚 Calling modal.closeAll()');
-        modal.closeAll();
+    // Close modal first - try multiple methods
+    const closeModal = () => {
+      // Try backdrop
+      const backdrop = document.querySelector('.modal-backdrop');
+      if (backdrop) {
+        backdrop.remove();
+        return true;
       }
-    } catch (e) {
-      console.warn('📚 modal.closeAll failed:', e);
-    }
-    
-    // 2. Fallback: directly remove modal backdrops from DOM
-    const removeModalElements = () => {
-      // Remove all modal backdrops (the modal system uses this class)
-      document.querySelectorAll('.modal-backdrop').forEach(el => {
-        console.log('📚 Removing modal-backdrop element');
-        el.classList.remove('active');
-        el.remove();
-      });
-      
-      // Also try removing any other modal containers
-      document.querySelectorAll('.modal-dialog').forEach(el => {
-        console.log('📚 Removing modal-dialog element');
-        el.remove();
-      });
-      
-      // Restore body scroll
-      document.body.style.overflow = '';
-      document.body.classList.remove('modal-open');
+      // Try modal container
+      const modalContainer = document.querySelector('.modal-container');
+      if (modalContainer) {
+        modalContainer.remove();
+        return true;
+      }
+      return false;
     };
     
-    // Run immediately
-    removeModalElements();
-    
-    // And again after a frame (for any async rendering)
-    requestAnimationFrame(removeModalElements);
+    // Close immediately
+    closeModal();
+    // Also try after a frame (for async rendering)
+    requestAnimationFrame(() => closeModal());
     
     // Get guide from temp array
     const guide = window._tempGuides?.[index];
     if (guide) {
       console.log('📚 Opening guide:', guide.routeName || guide.id);
-      // Delay to ensure modal is fully closed
-      setTimeout(() => this.showTrailGuide(guide), 150);
+      // Small delay to ensure modal is closed
+      setTimeout(() => this.showTrailGuide(guide), 50);
     } else {
       console.error('📚 Guide not found at index:', index);
-      toast.errorKey('guideNotFound');
+      toast.error('Guide not found');
     }
   }
 
@@ -2264,11 +1919,6 @@ Happy trail mapping! 🥾`);
       
       console.log('📚 HTML content length:', guideHTML?.length || 0);
       
-      // IMPORTANT: Remove any existing modals before showing guide
-      document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-      document.body.style.overflow = '';
-      document.body.classList.remove('modal-open');
-      
       // Create fullscreen overlay with iframe for proper script execution (maps, etc.)
       const overlay = document.createElement('div');
       overlay.className = 'trail-guide-overlay';
@@ -2294,7 +1944,7 @@ Happy trail mapping! 🥾`);
             right: 0;
             bottom: 0;
             background: white;
-            z-index: 200000;
+            z-index: 10000;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -2378,7 +2028,7 @@ Happy trail mapping! 🥾`);
       
     } catch (error) {
       console.error('Failed to display trail guide:', error);
-      toast.errorKey('displayGuideFailed');
+      toast.error('Failed to display trail guide');
     }
   }
 
@@ -2399,7 +2049,7 @@ Happy trail mapping! 🥾`);
       // Check if user is signed in
       const authStatus = await this.checkLandingAuth();
       if (!authStatus.isSignedIn) {
-        toast.errorKey('signInToViewGuides');
+        toast.error('Please sign in first to view your trail guides');
         return;
       }
 
@@ -2427,7 +2077,7 @@ Happy trail mapping! 🥾`);
       console.log(`Found ${guides.length} trail guides`);
       
       if (guides.length === 0) {
-        toast.errorKey('noGuidesCreated');
+        toast.error('No trail guides found.\n\nTo create trail guides:\n• Record a route in the tracker\n• Save it to cloud\n• Trail guide will be auto-generated');
         return;
       }
       
@@ -2435,7 +2085,7 @@ Happy trail mapping! 🥾`);
       
     } catch (error) {
       console.error('Failed to load trail guides:', error);
-      toast.errorKey('loadGuidesFailed');
+      toast.error('Failed to load trail guides: ' + error.message);
     }
   }
 
@@ -2776,7 +2426,7 @@ async updateAuthStatus() {
     if (userInfo) userInfo.classList.remove('hidden');
     if (authPrompt) authPrompt.classList.add('hidden');
     if (userEmail) userEmail.textContent = this.currentUser.displayName || this.currentUser.email;
-    if (profileNavLink) profileNavLink.style.display = 'inline-flex';
+    if (profileNavLink) profileNavLink.style.display = 'block';
     if (navAuthBtn) navAuthBtn.textContent = 'Sign Out';
   } else {
     // User is signed out
@@ -2884,59 +2534,10 @@ async function initAccessReport() {
   });
 }
 
-/**
- * Apply language direction from saved preference
- */
-function applyLanguageDirection() {
-  const savedLang = localStorage.getItem('accessNature_language') || 'en';
-  const isHebrew = savedLang === 'he';
-  
-  if (isHebrew) {
-    document.documentElement.setAttribute('dir', 'rtl');
-    document.documentElement.setAttribute('lang', 'he');
-    document.body.setAttribute('dir', 'rtl');
-    document.documentElement.classList.add('rtl');
-    document.body.classList.add('rtl');
-  }
-  
-  console.log(`🌐 Language direction applied: ${isHebrew ? 'RTL' : 'LTR'}`);
-}
-
 // Initialize landing page when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('📄 DOM Content Loaded - starting landing page init');
   try {
-    // Initialize i18n (language support) first
-    console.log('🌐 Initializing i18n...');
-    try {
-      await i18n.init();
-      // Language toggle is now handled by topToolbarUI
-      i18n.translatePage();
-      
-      // Listen for language changes to retranslate
-      i18n.onLanguageChange(async (newLang, prevLang) => {
-        console.log(`🌐 Language changed: ${prevLang} → ${newLang}`);
-        i18n.translatePage();
-        
-        // Refresh dynamic content that doesn't use data-i18n
-        if (window.communityChallenges?.refresh) {
-          await window.communityChallenges.refresh();
-        }
-        
-        // Refresh featured trails to update accessibility badges
-        if (window.landingController?.filteredTrails?.length > 0) {
-          window.landingController.displayFeaturedTrails(
-            window.landingController.filteredTrails.slice(0, window.landingController.displayedFeaturedCount)
-          );
-        }
-      });
-      console.log('🌐 i18n initialized successfully');
-    } catch (i18nError) {
-      console.warn('🌐 i18n initialization failed:', i18nError);
-      // Apply direction from saved preference
-      applyLanguageDirection();
-    }
-    
     // Initialize landing page controller
     const landingController = new LandingPageController();
     console.log('📄 LandingPageController created');
@@ -2959,8 +2560,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.userService = userService;
     window.showError = showError;
     window.getErrorMessage = getErrorMessage;
-    window.i18n = i18n;
-    window.t = t;
     
     // Setup badge notification popups
     gamificationUI.setupBadgeNotifications();
@@ -2969,7 +2568,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     mobilityProfileUI.initialize();
     
     // Initialize community challenges
-    await communityChallenges.initialize();
+    communityChallenges.initialize();
     const challengesContainer = document.getElementById('communityChallengesPanel');
     if (challengesContainer) {
       communityChallenges.mount(challengesContainer);
@@ -2991,10 +2590,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Reload data
         await landingController.loadDataWithRetry();
         
-        toast.successKey('dataRefreshed');
+        toast.success('Data refreshed!');
       } catch (error) {
         console.error('Refresh failed:', error);
-        toast.errorKey('refreshFailed');
+        toast.error('Refresh failed. Please try again.');
       }
     };
     
