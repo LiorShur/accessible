@@ -251,31 +251,6 @@ class I18nManager {
     // Also apply after a short delay to catch any late DOM updates
     setTimeout(applyLTR, 50);
     setTimeout(applyLTR, 150);
-    
-    // Set up a one-time MutationObserver to catch any changes
-    if (!this._ltrObserverSetup) {
-      this._ltrObserverSetup = true;
-      const observer = new MutationObserver((mutations) => {
-        let shouldReapply = false;
-        mutations.forEach(mutation => {
-          if (mutation.type === 'attributes' && 
-              (mutation.attributeName === 'dir' || mutation.attributeName === 'style')) {
-            shouldReapply = true;
-          }
-        });
-        if (shouldReapply) {
-          applyLTR();
-        }
-      });
-      
-      // Observe key elements
-      ltrSelectors.slice(0, 10).forEach(selector => {
-        const el = document.querySelector(selector);
-        if (el) {
-          observer.observe(el, { attributes: true, attributeFilter: ['dir', 'style'] });
-        }
-      });
-    }
   }
 
   /**
