@@ -220,28 +220,62 @@ class I18nManager {
       '.action-sheet'
     ];
     
-    ltrSelectors.forEach(selector => {
-      document.querySelectorAll(selector).forEach(el => {
-        el.style.direction = 'ltr';
-        el.style.textAlign = 'left';
-        el.setAttribute('dir', 'ltr');
-        // Also set flex-direction for flex containers
-        const computedStyle = window.getComputedStyle(el);
-        if (computedStyle.display === 'flex' && !el.style.flexDirection) {
-          el.style.flexDirection = 'row';
+    const applyLTR = () => {
+      ltrSelectors.forEach(selector => {
+        document.querySelectorAll(selector).forEach(el => {
+          el.style.setProperty('direction', 'ltr', 'important');
+          el.style.setProperty('text-align', 'left', 'important');
+          el.setAttribute('dir', 'ltr');
+          // Also set flex-direction for flex containers
+          const computedStyle = window.getComputedStyle(el);
+          if (computedStyle.display === 'flex') {
+            el.style.setProperty('flex-direction', 'row', 'important');
+          }
+        });
+      });
+      
+      // Also enforce on all children of key containers
+      ['#topControlBar', '#secondRowControls', '.top-nav', '#globalBottomNav'].forEach(parentSelector => {
+        const parent = document.querySelector(parentSelector);
+        if (parent) {
+          parent.querySelectorAll('*').forEach(child => {
+            child.style.setProperty('direction', 'ltr', 'important');
+          });
         }
       });
-    });
+    };
     
-    // Also enforce on all children of key containers
-    ['#topControlBar', '#secondRowControls', '.top-nav', '#globalBottomNav'].forEach(parentSelector => {
-      const parent = document.querySelector(parentSelector);
-      if (parent) {
-        parent.querySelectorAll('*').forEach(child => {
-          child.style.direction = 'ltr';
+    // Apply immediately
+    applyLTR();
+    
+    // Also apply after a short delay to catch any late DOM updates
+    setTimeout(applyLTR, 50);
+    setTimeout(applyLTR, 150);
+    
+    // Set up a one-time MutationObserver to catch any changes
+    if (!this._ltrObserverSetup) {
+      this._ltrObserverSetup = true;
+      const observer = new MutationObserver((mutations) => {
+        let shouldReapply = false;
+        mutations.forEach(mutation => {
+          if (mutation.type === 'attributes' && 
+              (mutation.attributeName === 'dir' || mutation.attributeName === 'style')) {
+            shouldReapply = true;
+          }
         });
-      }
-    });
+        if (shouldReapply) {
+          applyLTR();
+        }
+      });
+      
+      // Observe key elements
+      ltrSelectors.slice(0, 10).forEach(selector => {
+        const el = document.querySelector(selector);
+        if (el) {
+          observer.observe(el, { attributes: true, attributeFilter: ['dir', 'style'] });
+        }
+      });
+    }
   }
 
   /**
