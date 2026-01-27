@@ -8,7 +8,6 @@
 
 import { userService } from '../services/userService.js';
 import { toast } from '../utils/toast.js';
-import { t } from '../i18n/i18n.js';
 
 /**
  * Challenge Types
@@ -24,134 +23,103 @@ export const CHALLENGE_TYPES = {
 };
 
 /**
- * Get current month's start and end dates
+ * Active Challenges - These would typically come from Firebase
+ * For now, hardcoded examples
  */
-function getCurrentMonthDates() {
-  const now = new Date();
-  const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-  return { startDate, endDate };
-}
-
-/**
- * Get current month name
- */
-function getCurrentMonthName() {
-  const lang = localStorage.getItem('accessNature_language') || 'en';
-  const now = new Date();
-  return now.toLocaleDateString(lang === 'he' ? 'he-IL' : 'en-US', { month: 'long' });
-}
-
-/**
- * Active Challenges - Dynamic monthly challenges
- */
-function getActiveChallenges() {
-  const { startDate, endDate } = getCurrentMonthDates();
-  const monthName = getCurrentMonthName();
-  
-  return [
-    {
-      id: 'monthly_explorer',
-      titleKey: 'challenges.monthlyExplorer',
-      descriptionKey: 'challenges.documentTrails',
-      icon: '🌲',
-      type: CHALLENGE_TYPES.DOCUMENT_TRAILS,
-      target: 5,
-      startDate,
-      endDate,
-      reward: {
-        points: 200,
-        badge: 'monthly_champion'
-      },
-      isActive: true
+export const ACTIVE_CHALLENGES = [
+  {
+    id: 'december_explorer',
+    title: 'December Explorer',
+    description: 'Document 5 new trails this month',
+    icon: '🌲',
+    type: CHALLENGE_TYPES.DOCUMENT_TRAILS,
+    target: 5,
+    startDate: new Date('2025-12-01'),
+    endDate: new Date('2025-12-31'),
+    reward: {
+      points: 200,
+      badge: 'december_champion'
     },
-    {
-      id: 'accessibility_advocate',
-      titleKey: 'challenges.accessibilityAdvocate',
-      descriptionKey: 'challenges.completeSurveys',
-      icon: '♿',
-      type: CHALLENGE_TYPES.SURVEY_COMPLETION,
-      target: 10,
-      startDate,
-      endDate,
-      reward: {
-        points: 150,
-        badge: null
-      },
-      isActive: true
+    isActive: true
+  },
+  {
+    id: 'accessibility_advocate',
+    title: 'Accessibility Advocate',
+    description: 'Complete 10 accessibility surveys',
+    icon: '♿',
+    type: CHALLENGE_TYPES.SURVEY_COMPLETION,
+    target: 10,
+    startDate: new Date('2025-12-01'),
+    endDate: new Date('2025-12-31'),
+    reward: {
+      points: 150,
+      badge: null
     },
-    {
-      id: 'community_verifier',
-      titleKey: 'challenges.communityVerifier',
-      descriptionKey: 'challenges.verifyReports',
-      icon: '✓',
-      type: CHALLENGE_TYPES.VERIFY_REPORTS,
-      target: 15,
-      startDate,
-      endDate,
-      reward: {
-        points: 100,
-        badge: null
-      },
-      isActive: true
+    isActive: true
+  },
+  {
+    id: 'community_verifier',
+    title: 'Community Verifier',
+    description: 'Verify 15 accessibility reports',
+    icon: '✓',
+    type: CHALLENGE_TYPES.VERIFY_REPORTS,
+    target: 15,
+    startDate: new Date('2025-12-01'),
+    endDate: new Date('2025-12-31'),
+    reward: {
+      points: 100,
+      badge: null
     },
-    {
-      id: 'photo_journalist',
-      titleKey: 'challenges.photoJournalist',
-      descriptionKey: 'challenges.uploadPhotos',
-      icon: '📷',
-      type: CHALLENGE_TYPES.PHOTO_UPLOADS,
-      target: 20,
-      startDate,
-      endDate,
-      reward: {
-        points: 120,
-        badge: null
-      },
-      isActive: true
-    }
-  ];
-}
-
-export const ACTIVE_CHALLENGES = getActiveChallenges();
+    isActive: true
+  },
+  {
+    id: 'photo_journalist',
+    title: 'Photo Journalist',
+    description: 'Upload 20 trail photos',
+    icon: '📷',
+    type: CHALLENGE_TYPES.PHOTO_UPLOADS,
+    target: 20,
+    startDate: new Date('2025-12-01'),
+    endDate: new Date('2025-12-31'),
+    reward: {
+      points: 100,
+      badge: null
+    },
+    isActive: true
+  },
+  {
+    id: 'distance_warrior',
+    title: 'Distance Warrior',
+    description: 'Track 50km of trails',
+    icon: '🏃',
+    type: CHALLENGE_TYPES.DISTANCE_TRACKED,
+    target: 50000, // meters
+    startDate: new Date('2025-12-01'),
+    endDate: new Date('2025-12-31'),
+    reward: {
+      points: 250,
+      badge: 'endurance_badge'
+    },
+    isActive: true
+  }
+];
 
 /**
  * Community Challenges UI
  */
 class CommunityChallengesUI {
   constructor() {
-    this.challenges = getActiveChallenges(); // Get fresh challenges
+    this.challenges = ACTIVE_CHALLENGES;
     this.userProgress = {};
   }
 
   /**
    * Initialize the challenges UI
    */
-  async initialize() {
+  initialize() {
     this.injectStyles();
-    await this.loadUserProgress();
-    
-    // Listen for language changes
-    window.addEventListener('languageChanged', () => {
-      this.refresh();
-    });
-    
+    this.loadUserProgress();
     console.log('🏆 Community Challenges initialized');
-  }
-
-  /**
-   * Refresh challenges - reload user progress and re-render
-   */
-  async refresh() {
-    await this.loadUserProgress();
-    this.challenges = getActiveChallenges(); // Refresh for translations
-    
-    // Re-render if already mounted
-    const container = document.getElementById('communityChallengesPanel');
-    if (container) {
-      container.innerHTML = this.renderPanel();
-    }
-    console.log('🏆 Community Challenges refreshed');
   }
 
   /**
@@ -377,7 +345,7 @@ class CommunityChallengesUI {
   /**
    * Load user's challenge progress
    */
-  async loadUserProgress() {
+  loadUserProgress() {
     // Get progress from userService engagement data
     if (userService.isInitialized) {
       const engagement = userService.getEngagementSummary();
@@ -393,10 +361,31 @@ class CommunityChallengesUI {
       
       console.log('🏆 Challenge progress loaded:', this.userProgress);
     } else {
-      // Reset progress when not signed in
-      this.userProgress = {};
-      console.log('🏆 Challenge progress reset (user not initialized)');
+      // Set defaults when not logged in
+      this.userProgress = {
+        [CHALLENGE_TYPES.DOCUMENT_TRAILS]: 0,
+        [CHALLENGE_TYPES.SURVEY_COMPLETION]: 0,
+        [CHALLENGE_TYPES.VERIFY_REPORTS]: 0,
+        [CHALLENGE_TYPES.PHOTO_UPLOADS]: 0,
+        [CHALLENGE_TYPES.DISTANCE_TRACKED]: 0,
+        [CHALLENGE_TYPES.SUBMIT_REPORTS]: 0
+      };
     }
+  }
+
+  /**
+   * Refresh challenges UI - call this after user data changes
+   */
+  refresh() {
+    this.loadUserProgress();
+    
+    // Find and update mounted challenge panels
+    const panelById = document.getElementById('communityChallengesPanel');
+    if (panelById) {
+      panelById.innerHTML = this.renderPanel();
+    }
+    
+    console.log('🏆 Challenges UI refreshed');
   }
 
   /**
@@ -459,9 +448,6 @@ class CommunityChallengesUI {
    * @returns {string}
    */
   renderPanel() {
-    // Refresh challenges to get updated translations
-    this.challenges = getActiveChallenges();
-    
     const activeChallenges = this.challenges.filter(c => {
       const now = new Date();
       return c.isActive && now >= c.startDate && now <= c.endDate;
@@ -471,11 +457,11 @@ class CommunityChallengesUI {
       return `
         <div class="challenges-panel">
           <div class="challenges-header">
-            <h3>🏆 ${t('challenges.title')}</h3>
+            <h3>🏆 Community Challenges</h3>
           </div>
           <div class="challenges-list" style="padding: 24px; text-align: center; color: #6b7280;">
-            <p>${t('challenges.noActive')}</p>
-            <p style="font-size: 0.85rem;">${t('challenges.checkBack')}</p>
+            <p>No active challenges right now.</p>
+            <p style="font-size: 0.85rem;">Check back soon for new challenges!</p>
           </div>
         </div>
       `;
@@ -486,8 +472,8 @@ class CommunityChallengesUI {
     return `
       <div class="challenges-panel">
         <div class="challenges-header">
-          <h3>🏆 ${t('challenges.title')}</h3>
-          <span class="time-remaining">⏰ ${daysRemaining} ${t('challenges.daysLeft')}</span>
+          <h3>🏆 Community Challenges</h3>
+          <span class="time-remaining">⏰ ${daysRemaining} days left</span>
         </div>
         <div class="challenges-list">
           ${activeChallenges.map(challenge => this.renderChallengeCard(challenge)).join('')}
@@ -506,10 +492,6 @@ class CommunityChallengesUI {
     const target = challenge.target;
     const percentage = Math.min(100, (progress / target) * 100);
     const completed = this.isCompleted(challenge);
-    
-    // Get translated title and description
-    const title = challenge.titleKey ? t(challenge.titleKey) : challenge.title;
-    const description = challenge.descriptionKey ? t(challenge.descriptionKey) : challenge.description;
 
     return `
       <div class="challenge-card ${completed ? 'completed' : ''}">
@@ -517,10 +499,10 @@ class CommunityChallengesUI {
           <div class="challenge-icon">${challenge.icon}</div>
           <div class="challenge-info">
             <div class="challenge-title">
-              ${title}
-              ${completed ? `<span class="completed-badge">✓ ${t('challenges.complete')}</span>` : ''}
+              ${challenge.title}
+              ${completed ? '<span class="completed-badge">✓ Complete</span>' : ''}
             </div>
-            <div class="challenge-desc">${description}</div>
+            <div class="challenge-desc">${challenge.description}</div>
           </div>
           <div class="challenge-reward">
             🎁 +${challenge.reward.points}
