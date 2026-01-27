@@ -31,13 +31,15 @@ export class TrailGuideGeneratorV2 {
     console.log('  - notes:', routeData?.filter(p => p.type === 'text').length || 0);
     console.log('  - accessibilityData:', accessibilityData);
     
-    // Get current language
-    const lang = window.i18n?.getLanguage() || localStorage.getItem('accessNature_language') || 'en';
-    const isHebrew = lang === 'he';
-    const dir = isHebrew ? 'rtl' : 'ltr';
+    // Trail guides always default to English LTR
+    // User can toggle language within the guide
+    const defaultLang = 'en';
+    const dir = 'ltr';
     
-    // Translations for trail guide
-    const t = this.getTranslations(lang);
+    // Get translations for both languages (we'll include both for toggle)
+    const tEn = this.getTranslations('en');
+    const tHe = this.getTranslations('he');
+    const t = tEn; // Default to English
     
     const locationPoints = routeData.filter(p => p.type === 'location' && p.coords);
     const photos = routeData.filter(p => p.type === 'photo');
@@ -47,8 +49,13 @@ export class TrailGuideGeneratorV2 {
     console.log('  - Filtered notes:', notes);
     
     const date = new Date(routeInfo.date);
-    const dateLocale = isHebrew ? 'he-IL' : 'en-US';
-    const formattedDate = date.toLocaleDateString(dateLocale, { 
+    const formattedDateEn = date.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    const formattedDateHe = date.toLocaleDateString('he-IL', { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
@@ -57,6 +64,7 @@ export class TrailGuideGeneratorV2 {
     
     // Determine accessibility level
     const accessLevel = this.getAccessibilityLevel(accessibilityData, t);
+    const accessLevelHe = this.getAccessibilityLevel(accessibilityData, tHe);
     
     // Build timeline items
     const timelineItems = this.buildTimeline(routeData, routeInfo, t);
@@ -75,7 +83,7 @@ export class TrailGuideGeneratorV2 {
     }
 
     return `<!DOCTYPE html>
-<html lang="${lang}" dir="${dir}">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -88,13 +96,33 @@ export class TrailGuideGeneratorV2 {
 </head>
 <body>
     <div class="tg-container" id="trailGuideContent">
+        <!-- Language Toggle -->
+        <div class="tg-lang-toggle" style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
+            <button id="langToggleBtn" onclick="toggleLanguage()" style="
+                background: rgba(44, 85, 48, 0.9);
+                color: white;
+                border: none;
+                padding: 8px 12px;
+                border-radius: 20px;
+                cursor: pointer;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            ">
+                <span id="langFlag">🇮🇱</span>
+                <span id="langLabel">עברית</span>
+            </button>
+        </div>
+
         <!-- Header -->
         <header class="tg-header">
             <div class="tg-header-content">
-                <span class="tg-badge">🌲 ${t.accessNatureTrailGuide}</span>
+                <span class="tg-badge" data-en="🌲 Access Nature Trail Guide" data-he="🌲 מדריך שביל Access Nature">🌲 ${tEn.accessNatureTrailGuide}</span>
                 <h1 class="tg-title">${routeInfo.name}</h1>
-                <p class="tg-location">${accessibilityData?.location || t.locationNotSpecified}</p>
-                <p class="tg-date">${t.documentedOn} ${formattedDate}</p>
+                <p class="tg-location">${accessibilityData?.location || tEn.locationNotSpecified}</p>
+                <p class="tg-date" data-en="${tEn.documentedOn} ${formattedDateEn}" data-he="${tHe.documentedOn} ${formattedDateHe}">${tEn.documentedOn} ${formattedDateEn}</p>
             </div>
         </header>
 
@@ -102,8 +130,8 @@ export class TrailGuideGeneratorV2 {
         <div class="tg-access-banner ${accessLevel.class}">
             <div class="tg-access-icon">${accessLevel.icon}</div>
             <div class="tg-access-info">
-                <div class="tg-access-level">${accessLevel.label}</div>
-                <div class="tg-access-desc">${accessLevel.description}</div>
+                <div class="tg-access-level" data-en="${accessLevel.label}" data-he="${accessLevelHe.label}">${accessLevel.label}</div>
+                <div class="tg-access-desc" data-en="${accessLevel.description}" data-he="${accessLevelHe.description}">${accessLevel.description}</div>
             </div>
         </div>
 
@@ -111,7 +139,7 @@ export class TrailGuideGeneratorV2 {
         <div class="tg-action-bar" id="actionBar">
             ${locationPoints.length > 0 ? `
             <div class="tg-action-dropdown">
-                <button class="tg-action-btn tg-action-navigate" onclick="toggleNavDropdown(event)">
+                <button class="tg-action-btn tg-action-navigate" onclick="toggleNavDropdown(event)" data-en="🧭 Navigate to Start" data-he="🧭 נווט להתחלה">
                     🧭 Navigate to Start
                 </button>
                 <div id="navDropdown" class="tg-dropdown-content">
@@ -124,10 +152,10 @@ export class TrailGuideGeneratorV2 {
                 </div>
             </div>
             ` : ''}
-            <button class="tg-action-btn tg-action-pdf" id="pdfBtn" onclick="downloadPDF()">
+            <button class="tg-action-btn tg-action-pdf" id="pdfBtn" onclick="downloadPDF()" data-en="📥 Download PDF" data-he="📥 הורד PDF">
                 📥 Download PDF
             </button>
-            <button class="tg-action-btn tg-action-details" onclick="closeNavDropdown(); document.getElementById('surveyDetails').classList.toggle('show')">
+            <button class="tg-action-btn tg-action-details" onclick="closeNavDropdown(); document.getElementById('surveyDetails').classList.toggle('show')" data-en="📋 Full Survey Details" data-he="📋 פרטי סקר מלאים">
                 📋 Full Survey Details
             </button>
         </div>
@@ -136,39 +164,39 @@ export class TrailGuideGeneratorV2 {
         <div id="pdfLoadingOverlay" class="tg-pdf-overlay" style="display: none;">
             <div class="tg-pdf-loading">
                 <div class="tg-pdf-spinner"></div>
-                <p>Generating PDF...</p>
-                <p class="tg-pdf-hint">${t.thisMayTake}</p>
+                <p data-en="Generating PDF..." data-he="מייצר PDF...">Generating PDF...</p>
+                <p class="tg-pdf-hint" data-en="This may take a few seconds" data-he="זה עשוי לקחת מספר שניות">This may take a few seconds</p>
             </div>
         </div>
 
         <!-- Hidden Survey Details Panel -->
         <div id="surveyDetails" class="tg-survey-panel">
-            <h3>📋 ${t.completeAccessibilitySurvey}</h3>
-            ${this.renderFullSurveyDetails(accessibilityData, t)}
+            <h3 data-en="📋 Complete Accessibility Survey" data-he="📋 סקר נגישות מלא">📋 ${tEn.completeAccessibilitySurvey}</h3>
+            ${this.renderFullSurveyDetails(accessibilityData, tEn)}
         </div>
 
         <!-- Quick Stats -->
         <div class="tg-stats-row">
             <div class="tg-stat">
                 <span class="tg-stat-value">${(routeInfo.totalDistance || 0).toFixed(1)}</span>
-                <span class="tg-stat-label">${t.km}</span>
+                <span class="tg-stat-label" data-en="${tEn.km}" data-he="${tHe.km}">${tEn.km}</span>
             </div>
             <div class="tg-stat">
                 <span class="tg-stat-value">${this.formatDuration(routeInfo.elapsedTime || 0)}</span>
-                <span class="tg-stat-label">${t.duration}</span>
+                <span class="tg-stat-label" data-en="${tEn.duration}" data-he="${tHe.duration}">${tEn.duration}</span>
             </div>
             <div class="tg-stat">
                 <span class="tg-stat-value">${this.getDifficultyEmoji(accessibilityData)}</span>
-                <span class="tg-stat-label">${this.getDifficultyLabel(accessibilityData, t)}</span>
+                <span class="tg-stat-label" data-en="${this.getDifficultyLabel(accessibilityData, tEn)}" data-he="${this.getDifficultyLabel(accessibilityData, tHe)}">${this.getDifficultyLabel(accessibilityData, tEn)}</span>
             </div>
             <div class="tg-stat">
                 <span class="tg-stat-value">${this.getSurfaceIcon(accessibilityData)}</span>
-                <span class="tg-stat-label">${this.getSurfaceLabel(accessibilityData, t)}</span>
+                <span class="tg-stat-label" data-en="${this.getSurfaceLabel(accessibilityData, tEn)}" data-he="${this.getSurfaceLabel(accessibilityData, tHe)}">${this.getSurfaceLabel(accessibilityData, tEn)}</span>
             </div>
         </div>
 
         <!-- Elevation Profile -->
-        ${this.renderElevationSection(routeData, t)}
+        ${this.renderElevationSection(routeData, tEn, tHe)}
 
         <!-- Good For Section -->
         ${this.renderGoodForSection(accessibilityData, t)}
@@ -221,6 +249,32 @@ export class TrailGuideGeneratorV2 {
     
     <!-- PDF Download Script -->
     <script>
+        // Language toggle functionality
+        let currentLang = 'en';
+        
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'he' : 'en';
+            const isHebrew = currentLang === 'he';
+            
+            // Update HTML lang and dir
+            document.documentElement.lang = currentLang;
+            document.documentElement.dir = isHebrew ? 'rtl' : 'ltr';
+            
+            // Update toggle button
+            const langFlag = document.getElementById('langFlag');
+            const langLabel = document.getElementById('langLabel');
+            if (langFlag) langFlag.textContent = isHebrew ? '🇺🇸' : '🇮🇱';
+            if (langLabel) langLabel.textContent = isHebrew ? 'English' : 'עברית';
+            
+            // Update all translatable elements
+            document.querySelectorAll('[data-en][data-he]').forEach(el => {
+                const text = isHebrew ? el.dataset.he : el.dataset.en;
+                if (text) el.textContent = text;
+            });
+            
+            console.log('Language switched to:', currentLang);
+        }
+        
         // Navigation dropdown handlers
         function toggleNavDropdown(event) {
             event.stopPropagation();
@@ -377,13 +431,20 @@ export class TrailGuideGeneratorV2 {
     return '😊';
   }
 
-  getDifficultyLabel(data) {
+  getDifficultyLabel(data, t = {}) {
     const slopes = data?.trailSlopes || '';
     const quality = data?.surfaceQuality || '';
     
-    if (slopes.includes('Steep') || quality.includes('Poor')) return 'Challenging';
-    if (slopes.includes('Moderate') || quality.includes('Fair')) return 'Moderate';
-    return 'Easy';
+    // Translations with fallbacks
+    const labels = {
+      challenging: t.difficult || 'Challenging',
+      moderate: t.moderate || 'Moderate',
+      easy: t.easy || 'Easy'
+    };
+    
+    if (slopes.includes('Steep') || quality.includes('Poor')) return labels.challenging;
+    if (slopes.includes('Moderate') || quality.includes('Fair')) return labels.moderate;
+    return labels.easy;
   }
 
   getSurfaceIcon(data) {
@@ -398,39 +459,72 @@ export class TrailGuideGeneratorV2 {
     return '🛤️';
   }
 
-  getSurfaceLabel(data) {
+  getSurfaceLabel(data, t = {}) {
     const surfaces = data?.trailSurface || '';
     const surfaceStr = Array.isArray(surfaces) ? surfaces[0] : surfaces;
     
-    if (!surfaceStr) return 'Unknown';
-    if (surfaceStr.includes('Asphalt')) return 'Paved';
-    if (surfaceStr.includes('Concrete')) return 'Concrete';
-    if (surfaceStr.includes('Wood')) return 'Boardwalk';
-    if (surfaceStr.includes('Gravel')) return 'Gravel';
-    if (surfaceStr.includes('Grass')) return 'Grass';
-    if (surfaceStr.includes('Mixed')) return 'Mixed';
+    // Translations with fallbacks
+    const labels = {
+      paved: t.paved || 'Paved',
+      concrete: t.concrete || 'Concrete',
+      boardwalk: t.boardwalk || 'Boardwalk',
+      gravel: t.gravel || 'Gravel',
+      grass: t.grass || 'Grass',
+      mixed: t.mixed || 'Mixed',
+      unknown: t.unknown || 'Unknown'
+    };
+    
+    if (!surfaceStr) return labels.unknown;
+    if (surfaceStr.includes('Asphalt')) return labels.paved;
+    if (surfaceStr.includes('Concrete')) return labels.concrete;
+    if (surfaceStr.includes('Wood')) return labels.boardwalk;
+    if (surfaceStr.includes('Gravel')) return labels.gravel;
+    if (surfaceStr.includes('Grass')) return labels.grass;
+    if (surfaceStr.includes('Mixed')) return labels.mixed;
     return surfaceStr.split(' ')[0];
   }
 
   /**
    * Render elevation profile section
    */
-  renderElevationSection(routeData, t = {}) {
+  renderElevationSection(routeData, tEn = {}, tHe = {}) {
+    // Use English as default
+    const t = tEn;
+    
     // Default translations if not provided
-    const labels = {
-      elevationProfile: t.elevationProfile || 'Elevation Profile',
-      elevation: t.elevation || 'Elevation',
-      ascent: t.elevationGain || 'Ascent',
-      descent: t.elevationLoss || 'Descent',
-      min: t.minElevation || 'Min',
-      max: t.maxElevation || 'Max',
-      singlePoint: t.singlePointRecorded || 'Single point recorded. Track longer routes for elevation profile chart.',
-      flat: t.flat || 'Flat',
-      moderate: t.moderate || 'Moderate',
-      steep: t.steep || 'Steep',
-      verysteep: t.verysteep || 'Very Steep',
-      steepSections: t.steepSections || 'Steep Sections'
+    const labelsEn = {
+      elevationProfile: tEn.elevationProfile || 'Elevation Profile',
+      elevation: tEn.elevation || 'Elevation',
+      ascent: tEn.elevationGain || 'Ascent',
+      descent: tEn.elevationLoss || 'Descent',
+      min: tEn.minElevation || 'Min',
+      max: tEn.maxElevation || 'Max',
+      singlePoint: tEn.singlePointRecorded || 'Single point recorded. Track longer routes for elevation profile chart.',
+      flat: tEn.flat || 'Flat',
+      moderate: tEn.moderate || 'Moderate',
+      steep: tEn.steep || 'Steep',
+      verysteep: tEn.verysteep || 'Very Steep',
+      steepSections: tEn.steepSections || 'Steep Sections',
+      steepWarning: tEn.steepWarning || 'This route has steep sections that may be challenging for mobility devices.'
     };
+    
+    const labelsHe = {
+      elevationProfile: tHe.elevationProfile || 'פרופיל גובה',
+      elevation: tHe.elevation || 'גובה',
+      ascent: tHe.elevationGain || 'עלייה',
+      descent: tHe.elevationLoss || 'ירידה',
+      min: tHe.minElevation || 'מינ׳',
+      max: tHe.maxElevation || 'מקס׳',
+      singlePoint: tHe.singlePointRecorded || 'נקודה בודדת נרשמה. הקלט מסלולים ארוכים יותר לתרשים גובה.',
+      flat: tHe.flat || 'שטוח',
+      moderate: tHe.moderate || 'בינוני',
+      steep: tHe.steep || 'תלול',
+      verysteep: tHe.verysteep || 'תלול מאוד',
+      steepSections: tHe.steepSections || 'קטעים תלולים',
+      steepWarning: tHe.steepWarning || 'למסלול זה יש קטעים תלולים שעלולים להיות מאתגרים למכשירי ניידות.'
+    };
+    
+    const labels = labelsEn;
     
     // Extract location points with elevation data
     const locationPoints = routeData.filter(p => 
@@ -468,7 +562,7 @@ export class TrailGuideGeneratorV2 {
 
     // Calculate cumulative distance and build elevation data
     let cumulativeDistance = 0;
-    const elevationData = [];
+    let elevationData = [];
     
     for (let i = 0; i < locationPoints.length; i++) {
       const point = locationPoints[i];
@@ -487,6 +581,9 @@ export class TrailGuideGeneratorV2 {
         elevation: point.elevation
       });
     }
+    
+    // Apply smoothing to elevation data to filter out erratic values
+    elevationData = this.smoothElevationData(elevationData);
 
     // Calculate stats
     const elevations = elevationData.map(p => p.elevation);
@@ -533,29 +630,29 @@ export class TrailGuideGeneratorV2 {
 
     return `
         <section class="tg-section tg-elevation">
-            <h2 class="tg-section-title">📈 ${labels.elevationProfile}</h2>
+            <h2 class="tg-section-title" data-en="📈 ${labelsEn.elevationProfile}" data-he="📈 ${labelsHe.elevationProfile}">📈 ${labels.elevationProfile}</h2>
             
             <!-- Elevation Stats -->
             <div class="tg-elevation-stats">
                 <div class="tg-elev-stat">
                     <span class="tg-elev-icon" style="color: #4CAF50;">↑</span>
                     <span class="tg-elev-value">${Math.round(totalAscent)}m</span>
-                    <span class="tg-elev-label">${labels.ascent}</span>
+                    <span class="tg-elev-label" data-en="${labelsEn.ascent}" data-he="${labelsHe.ascent}">${labels.ascent}</span>
                 </div>
                 <div class="tg-elev-stat">
                     <span class="tg-elev-icon" style="color: #f44336;">↓</span>
                     <span class="tg-elev-value">${Math.round(totalDescent)}m</span>
-                    <span class="tg-elev-label">${labels.descent}</span>
+                    <span class="tg-elev-label" data-en="${labelsEn.descent}" data-he="${labelsHe.descent}">${labels.descent}</span>
                 </div>
                 <div class="tg-elev-stat">
                     <span class="tg-elev-icon" style="color: #2196F3;">▽</span>
                     <span class="tg-elev-value">${Math.round(minElevation)}m</span>
-                    <span class="tg-elev-label">${labels.min}</span>
+                    <span class="tg-elev-label" data-en="${labelsEn.min}" data-he="${labelsHe.min}">${labels.min}</span>
                 </div>
                 <div class="tg-elev-stat">
                     <span class="tg-elev-icon" style="color: #FF9800;">△</span>
                     <span class="tg-elev-value">${Math.round(maxElevation)}m</span>
-                    <span class="tg-elev-label">${labels.max}</span>
+                    <span class="tg-elev-label" data-en="${labelsEn.max}" data-he="${labelsHe.max}">${labels.max}</span>
                 </div>
             </div>
             
@@ -566,10 +663,10 @@ export class TrailGuideGeneratorV2 {
             
             <!-- Gradient Legend -->
             <div class="tg-gradient-legend">
-                <span class="tg-legend-item"><span class="tg-legend-color" style="background: #4CAF50;"></span> 0-5% ${labels.flat}</span>
-                <span class="tg-legend-item"><span class="tg-legend-color" style="background: #FFC107;"></span> 5-10% ${labels.moderate}</span>
-                <span class="tg-legend-item"><span class="tg-legend-color" style="background: #FF9800;"></span> 10-15% ${labels.steep}</span>
-                <span class="tg-legend-item"><span class="tg-legend-color" style="background: #f44336;"></span> >15% ${labels.verysteep}</span>
+                <span class="tg-legend-item"><span class="tg-legend-color" style="background: #4CAF50;"></span> <span data-en="0-5% ${labelsEn.flat}" data-he="0-5% ${labelsHe.flat}">0-5% ${labels.flat}</span></span>
+                <span class="tg-legend-item"><span class="tg-legend-color" style="background: #FFC107;"></span> <span data-en="5-10% ${labelsEn.moderate}" data-he="5-10% ${labelsHe.moderate}">5-10% ${labels.moderate}</span></span>
+                <span class="tg-legend-item"><span class="tg-legend-color" style="background: #FF9800;"></span> <span data-en="10-15% ${labelsEn.steep}" data-he="10-15% ${labelsHe.steep}">10-15% ${labels.steep}</span></span>
+                <span class="tg-legend-item"><span class="tg-legend-color" style="background: #f44336;"></span> <span data-en=">15% ${labelsEn.verysteep}" data-he=">15% ${labelsHe.verysteep}">>15% ${labels.verysteep}</span></span>
             </div>
             
             ${steepAnalysis.hasSteepSections ? `
@@ -577,10 +674,10 @@ export class TrailGuideGeneratorV2 {
             <div class="tg-steep-warning">
                 <div class="tg-steep-header">
                     <span class="tg-steep-icon">⚠️</span>
-                    <span class="tg-steep-title">${labels.steepSections} (${steepAnalysis.count})</span>
+                    <span class="tg-steep-title" data-en="${labelsEn.steepSections} (${steepAnalysis.count})" data-he="${labelsHe.steepSections} (${steepAnalysis.count})">${labels.steepSections} (${steepAnalysis.count})</span>
                 </div>
-                <div class="tg-steep-details">
-                    ${steepAnalysis.details}
+                <div class="tg-steep-details" data-en="${labelsEn.steepWarning}" data-he="${labelsHe.steepWarning}">
+                    ${labels.steepWarning}
                 </div>
             </div>
             ` : ''}
@@ -609,6 +706,79 @@ export class TrailGuideGeneratorV2 {
       verysteep: '#f44336'
     };
     return colors[category] || colors.flat;
+  }
+
+  /**
+   * Smooth elevation data to filter out erratic GPS elevation spikes
+   * Uses a combination of:
+   * 1. Median filter to remove outliers
+   * 2. Moving average for smoothing
+   * 3. Maximum gradient threshold to filter impossible elevation changes
+   */
+  smoothElevationData(data) {
+    if (data.length < 3) return data;
+    
+    // Step 1: Filter out obvious outliers using median filter
+    const windowSize = 3;
+    let filtered = data.map((point, i) => {
+      if (i === 0 || i === data.length - 1) return point;
+      
+      // Get window of elevations around this point
+      const start = Math.max(0, i - Math.floor(windowSize / 2));
+      const end = Math.min(data.length, i + Math.floor(windowSize / 2) + 1);
+      const window = data.slice(start, end).map(p => p.elevation);
+      
+      // Calculate median
+      const sorted = [...window].sort((a, b) => a - b);
+      const median = sorted[Math.floor(sorted.length / 2)];
+      
+      // If this point is too far from median (>20m), replace with median
+      const diff = Math.abs(point.elevation - median);
+      if (diff > 20) {
+        return { ...point, elevation: median };
+      }
+      
+      return point;
+    });
+    
+    // Step 2: Apply gradient-based filtering
+    // Maximum realistic gradient for walking trails is ~30% (very steep mountain)
+    // Flag changes that would imply >50% gradient over short distances
+    const maxGradient = 0.50; // 50%
+    
+    for (let i = 1; i < filtered.length; i++) {
+      const prev = filtered[i - 1];
+      const curr = filtered[i];
+      const horizontalDist = (curr.distance - prev.distance) * 1000; // km to m
+      
+      if (horizontalDist > 1) { // Only check if there's meaningful distance
+        const elevChange = Math.abs(curr.elevation - prev.elevation);
+        const gradient = elevChange / horizontalDist;
+        
+        if (gradient > maxGradient) {
+          // Interpolate to a reasonable value
+          const maxChange = horizontalDist * maxGradient;
+          const direction = curr.elevation > prev.elevation ? 1 : -1;
+          filtered[i] = { ...curr, elevation: prev.elevation + (direction * maxChange) };
+        }
+      }
+    }
+    
+    // Step 3: Apply simple moving average for final smoothing
+    const smoothed = filtered.map((point, i) => {
+      if (i === 0 || i === filtered.length - 1) return point;
+      
+      const prev = filtered[i - 1].elevation;
+      const curr = filtered[i].elevation;
+      const next = filtered[i + 1].elevation;
+      
+      // Weighted average: 25% prev, 50% current, 25% next
+      const smoothedElev = prev * 0.25 + curr * 0.5 + next * 0.25;
+      
+      return { ...point, elevation: smoothedElev };
+    });
+    
+    return smoothed;
   }
 
   /**

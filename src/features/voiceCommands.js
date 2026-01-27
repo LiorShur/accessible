@@ -372,7 +372,7 @@ class VoiceCommandsManager {
         /* Mobile adjustments */
         @media (max-width: 480px) {
           .voice-control-fab {
-            top: calc(50% + 110px);
+            top: calc(50% + 120px);
             width: 40px;
             height: 40px;
             font-size: 18px;
