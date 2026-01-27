@@ -2214,12 +2214,22 @@ setupModalEventListeners() {
           try {
             await userService.initializeUser(user);
             console.log('🏅 UserService initialized for gamification');
+            
+            // Refresh community challenges to show updated progress (non-blocking)
+            if (window.communityChallenges) {
+              window.communityChallenges.refresh();
+            }
           } catch (error) {
             console.warn('⚠️ UserService initialization failed:', error);
           }
         } else {
           console.log('👋 User signed out');
           userService.reset();
+          
+          // Refresh challenges to show reset progress (non-blocking)
+          if (window.communityChallenges) {
+            window.communityChallenges.refresh();
+          }
         }
       });
       
