@@ -1051,6 +1051,13 @@
     "editDisplayName": "Edit Display Name",
     "saveProfile": "Save Profile",
     "explorer": "Explorer",
+    "account": "Account",
+    "edit": "Edit",
+    "stats": {
+      "trailGuides": "Trail Guides",
+      "kmTracked": "km Tracked",
+      "reports": "Reports"
+    },
     "mobilityProfile": "Mobility Profile",
     "noMobilitySet": "No mobility preferences set. Tap Edit to personalize your experience.",
     "primaryMobilityAid": "Primary Mobility Aid",

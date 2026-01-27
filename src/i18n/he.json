@@ -1051,6 +1051,13 @@
     "editDisplayName": "ערוך שם תצוגה",
     "saveProfile": "שמור פרופיל",
     "explorer": "חוקר",
+    "account": "חשבון",
+    "edit": "עריכה",
+    "stats": {
+      "trailGuides": "מדריכי שבילים",
+      "kmTracked": "ק״מ נרשמו",
+      "reports": "דיווחים"
+    },
     "mobilityProfile": "פרופיל ניידות",
     "noMobilitySet": "לא הוגדרו העדפות ניידות. לחץ על עריכה להתאמה אישית.",
     "primaryMobilityAid": "אמצעי ניידות עיקרי",

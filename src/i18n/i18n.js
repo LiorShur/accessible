@@ -189,13 +189,15 @@ class I18nManager {
       '.top-nav',
       '.global-nav',
       '.unified-nav',
+      '.global-bottom-nav',
       'nav',
       '.nav-menu',
       '.nav-brand',
       '.nav-auth-indicator',
+      '.nav-link',
       // Tracker controls
       '#topControlBar',
-      '#secondaryRow',
+      '#secondRowControls',
       '#rightControls',
       '#leftControls',
       '.tracker-controls',
@@ -204,20 +206,41 @@ class I18nManager {
       // Display elements
       '.elevation-display',
       '.heading-display',
+      '#elevationDisplay',
+      '#headingDisplay',
       '#accessibilitySurveyBtn',
       // Voice/FAB elements
       '.voice-control-fab',
       '.voice-overlay',
       // Modals/banners created dynamically
       '#accessibility-reminder',
-      '#survey-prompt-overlay'
+      '#survey-prompt-overlay',
+      // Action sheet
+      '.action-sheet-overlay',
+      '.action-sheet'
     ];
     
     ltrSelectors.forEach(selector => {
       document.querySelectorAll(selector).forEach(el => {
         el.style.direction = 'ltr';
+        el.style.textAlign = 'left';
         el.setAttribute('dir', 'ltr');
+        // Also set flex-direction for flex containers
+        const computedStyle = window.getComputedStyle(el);
+        if (computedStyle.display === 'flex' && !el.style.flexDirection) {
+          el.style.flexDirection = 'row';
+        }
       });
+    });
+    
+    // Also enforce on all children of key containers
+    ['#topControlBar', '#secondRowControls', '.top-nav', '#globalBottomNav'].forEach(parentSelector => {
+      const parent = document.querySelector(parentSelector);
+      if (parent) {
+        parent.querySelectorAll('*').forEach(child => {
+          child.style.direction = 'ltr';
+        });
+      }
     });
   }
 
