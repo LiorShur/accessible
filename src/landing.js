@@ -1823,8 +1823,8 @@ Happy trail mapping! 🥾`);
           <span style="font-size: 1.8rem; flex-shrink: 0; display: inline-block;">📚</span>
           <div style="flex: 1; min-width: 0; overflow: hidden; display: block !important;">
             <div class="guide-item-name" style="font-weight: 600 !important; color: #1f2937 !important; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 1rem !important; background: transparent !important; display: block !important; visibility: visible !important;">${escapedName}</div>
-            <div class="guide-item-stats" style="font-size: 0.85rem !important; color: #6b7280 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: transparent !important; display: block !important; visibility: visible !important;">
-              📏 ${distance.toFixed(1)} km • 📅 ${dateStr} • ${isPublic ? t.public : t.private}
+            <div class="guide-item-stats" dir="ltr" style="font-size: 0.85rem !important; color: #6b7280 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: transparent !important; display: block !important; visibility: visible !important; direction: ltr; unicode-bidi: isolate;">
+              <span dir="ltr" style="unicode-bidi: embed;">📏 ${distance.toFixed(1)} km</span> • <span dir="ltr" style="unicode-bidi: embed;">📅 ${dateStr}</span> • <span>${isPublic ? t.public : t.private}</span>
             </div>
           </div>
           <span style="color: #2c5530; font-size: 1.2rem; flex-shrink: 0; display: inline-block;">→</span>
