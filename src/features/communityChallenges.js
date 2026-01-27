@@ -358,34 +358,7 @@ class CommunityChallengesUI {
         [CHALLENGE_TYPES.DISTANCE_TRACKED]: engagement.totalDistance || 0,
         [CHALLENGE_TYPES.SUBMIT_REPORTS]: engagement.reportsSubmitted || 0
       };
-      
-      console.log('🏆 Challenge progress loaded:', this.userProgress);
-    } else {
-      // Set defaults when not logged in
-      this.userProgress = {
-        [CHALLENGE_TYPES.DOCUMENT_TRAILS]: 0,
-        [CHALLENGE_TYPES.SURVEY_COMPLETION]: 0,
-        [CHALLENGE_TYPES.VERIFY_REPORTS]: 0,
-        [CHALLENGE_TYPES.PHOTO_UPLOADS]: 0,
-        [CHALLENGE_TYPES.DISTANCE_TRACKED]: 0,
-        [CHALLENGE_TYPES.SUBMIT_REPORTS]: 0
-      };
     }
-  }
-
-  /**
-   * Refresh challenges UI - call this after user data changes
-   */
-  refresh() {
-    this.loadUserProgress();
-    
-    // Find and update mounted challenge panels
-    const panelById = document.getElementById('communityChallengesPanel');
-    if (panelById) {
-      panelById.innerHTML = this.renderPanel();
-    }
-    
-    console.log('🏆 Challenges UI refreshed');
   }
 
   /**
