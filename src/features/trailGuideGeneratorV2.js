@@ -415,7 +415,23 @@ export class TrailGuideGeneratorV2 {
   /**
    * Render elevation profile section
    */
-  renderElevationSection(routeData) {
+  renderElevationSection(routeData, t = {}) {
+    // Default translations if not provided
+    const labels = {
+      elevationProfile: t.elevationProfile || 'Elevation Profile',
+      elevation: t.elevation || 'Elevation',
+      ascent: t.elevationGain || 'Ascent',
+      descent: t.elevationLoss || 'Descent',
+      min: t.minElevation || 'Min',
+      max: t.maxElevation || 'Max',
+      singlePoint: t.singlePointRecorded || 'Single point recorded. Track longer routes for elevation profile chart.',
+      flat: t.flat || 'Flat',
+      moderate: t.moderate || 'Moderate',
+      steep: t.steep || 'Steep',
+      verysteep: t.verysteep || 'Very Steep',
+      steepSections: t.steepSections || 'Steep Sections'
+    };
+    
     // Extract location points with elevation data
     const locationPoints = routeData.filter(p => 
       p.type === 'location' && 
@@ -435,16 +451,16 @@ export class TrailGuideGeneratorV2 {
       const elevation = Math.round(locationPoints[0].elevation);
       return `
         <section class="tg-section tg-elevation">
-            <h2 class="tg-section-title">📈 Elevation</h2>
+            <h2 class="tg-section-title">📈 ${labels.elevation}</h2>
             <div class="tg-elevation-stats" style="justify-content: center;">
                 <div class="tg-elev-stat">
                     <span class="tg-elev-icon" style="color: #4CAF50;">⛰️</span>
                     <span class="tg-elev-value">${elevation}m</span>
-                    <span class="tg-elev-label">Elevation</span>
+                    <span class="tg-elev-label">${labels.elevation}</span>
                 </div>
             </div>
             <p style="text-align: center; color: #888; font-size: 0.85rem; margin-top: 12px;">
-                Single point recorded. Track longer routes for elevation profile chart.
+                ${labels.singlePoint}
             </p>
         </section>
       `;
@@ -517,29 +533,29 @@ export class TrailGuideGeneratorV2 {
 
     return `
         <section class="tg-section tg-elevation">
-            <h2 class="tg-section-title">📈 Elevation Profile</h2>
+            <h2 class="tg-section-title">📈 ${labels.elevationProfile}</h2>
             
             <!-- Elevation Stats -->
             <div class="tg-elevation-stats">
                 <div class="tg-elev-stat">
                     <span class="tg-elev-icon" style="color: #4CAF50;">↑</span>
                     <span class="tg-elev-value">${Math.round(totalAscent)}m</span>
-                    <span class="tg-elev-label">Ascent</span>
+                    <span class="tg-elev-label">${labels.ascent}</span>
                 </div>
                 <div class="tg-elev-stat">
                     <span class="tg-elev-icon" style="color: #f44336;">↓</span>
                     <span class="tg-elev-value">${Math.round(totalDescent)}m</span>
-                    <span class="tg-elev-label">Descent</span>
+                    <span class="tg-elev-label">${labels.descent}</span>
                 </div>
                 <div class="tg-elev-stat">
                     <span class="tg-elev-icon" style="color: #2196F3;">▽</span>
                     <span class="tg-elev-value">${Math.round(minElevation)}m</span>
-                    <span class="tg-elev-label">Min</span>
+                    <span class="tg-elev-label">${labels.min}</span>
                 </div>
                 <div class="tg-elev-stat">
                     <span class="tg-elev-icon" style="color: #FF9800;">△</span>
                     <span class="tg-elev-value">${Math.round(maxElevation)}m</span>
-                    <span class="tg-elev-label">Max</span>
+                    <span class="tg-elev-label">${labels.max}</span>
                 </div>
             </div>
             
@@ -550,10 +566,10 @@ export class TrailGuideGeneratorV2 {
             
             <!-- Gradient Legend -->
             <div class="tg-gradient-legend">
-                <span class="tg-legend-item"><span class="tg-legend-color" style="background: #4CAF50;"></span> 0-5% Flat</span>
-                <span class="tg-legend-item"><span class="tg-legend-color" style="background: #FFC107;"></span> 5-10% Moderate</span>
-                <span class="tg-legend-item"><span class="tg-legend-color" style="background: #FF9800;"></span> 10-15% Steep</span>
-                <span class="tg-legend-item"><span class="tg-legend-color" style="background: #f44336;"></span> >15% Very Steep</span>
+                <span class="tg-legend-item"><span class="tg-legend-color" style="background: #4CAF50;"></span> 0-5% ${labels.flat}</span>
+                <span class="tg-legend-item"><span class="tg-legend-color" style="background: #FFC107;"></span> 5-10% ${labels.moderate}</span>
+                <span class="tg-legend-item"><span class="tg-legend-color" style="background: #FF9800;"></span> 10-15% ${labels.steep}</span>
+                <span class="tg-legend-item"><span class="tg-legend-color" style="background: #f44336;"></span> >15% ${labels.verysteep}</span>
             </div>
             
             ${steepAnalysis.hasSteepSections ? `
@@ -561,7 +577,7 @@ export class TrailGuideGeneratorV2 {
             <div class="tg-steep-warning">
                 <div class="tg-steep-header">
                     <span class="tg-steep-icon">⚠️</span>
-                    <span class="tg-steep-title">Steep Sections (${steepAnalysis.count})</span>
+                    <span class="tg-steep-title">${labels.steepSections} (${steepAnalysis.count})</span>
                 </div>
                 <div class="tg-steep-details">
                     ${steepAnalysis.details}
@@ -735,34 +751,45 @@ export class TrailGuideGeneratorV2 {
     return R * c;
   }
 
-  renderGoodForSection(data) {
+  renderGoodForSection(data, t = {}) {
     const badges = [];
     const wheelchair = data?.wheelchairAccess || '';
     
+    // Use translations with fallbacks
+    const labels = {
+      wheelchairs: t.wheelchairUsers || 'Wheelchairs',
+      strollers: t.strollers || 'Strollers',
+      walkers: t.mobilityAids || 'Walkers',
+      serviceDogs: t.visualImpairment || 'Service Dogs',
+      seniors: t.seniors || 'Seniors',
+      scooters: t.mobilityAids || 'Scooters',
+      goodFor: t.goodFor || 'Good For'
+    };
+    
     if (wheelchair.toLowerCase().includes('fully')) {
-      badges.push({ icon: '♿', label: 'Wheelchairs' });
-      badges.push({ icon: '👶', label: 'Strollers' });
+      badges.push({ icon: '♿', label: labels.wheelchairs });
+      badges.push({ icon: '👶', label: labels.strollers });
     } else if (wheelchair.toLowerCase().includes('partial') || wheelchair.toLowerCase().includes('assistance')) {
-      badges.push({ icon: '🦯', label: 'Walkers' });
+      badges.push({ icon: '🦯', label: labels.walkers });
     }
     
     // Always good for these if accessible
     if (!wheelchair.toLowerCase().includes('not')) {
-      badges.push({ icon: '🐕', label: 'Service Dogs' });
-      badges.push({ icon: '👴', label: 'Seniors' });
+      badges.push({ icon: '🐕', label: labels.serviceDogs });
+      badges.push({ icon: '👴', label: labels.seniors });
     }
     
     const surfaces = data?.trailSurface || '';
     const surfaceStr = Array.isArray(surfaces) ? surfaces.join(' ') : surfaces;
     if (surfaceStr.includes('Asphalt') || surfaceStr.includes('Concrete')) {
-      badges.push({ icon: '🛴', label: 'Scooters' });
+      badges.push({ icon: '🛴', label: labels.scooters });
     }
     
     if (badges.length === 0) return '';
     
     return `
         <section class="tg-section tg-good-for">
-            <h2 class="tg-section-title">✅ Good For</h2>
+            <h2 class="tg-section-title">✅ ${labels.goodFor}</h2>
             <div class="tg-badges">
                 ${badges.map(b => `
                     <div class="tg-badge-item">
@@ -775,48 +802,66 @@ export class TrailGuideGeneratorV2 {
     `;
   }
 
-  renderConditionsSection(data) {
+  renderConditionsSection(data, t = {}) {
     const conditions = [];
+    
+    // Labels with translations
+    const labels = {
+      trailConditions: t.trailConditions || 'Trail Conditions',
+      surface: t.surfaceType || 'Surface',
+      slope: t.slopeGrade || 'Slope',
+      shade: t.shade || 'Shade',
+      excellent: 'Excellent',
+      fair: 'Fair',
+      poor: 'Poor',
+      overgrown: 'Overgrown',
+      flatMild: t.flat || 'Flat/Mild',
+      moderate: t.moderate || 'Moderate',
+      steep: t.steep || 'Steep',
+      plenty: 'Plenty',
+      some: 'Some',
+      none: 'None'
+    };
     
     // Surface quality
     const quality = data?.surfaceQuality || '';
     if (quality) {
       let percent = 50;
-      let label = 'Fair';
-      if (quality.includes('Excellent')) { percent = 100; label = 'Excellent'; }
-      else if (quality.includes('Fair')) { percent = 65; label = 'Fair'; }
-      else if (quality.includes('Poor')) { percent = 30; label = 'Poor'; }
-      else if (quality.includes('Vegetation')) { percent = 15; label = 'Overgrown'; }
-      conditions.push({ label: 'Surface', percent, text: label });
+      let label = labels.fair;
+      if (quality.includes('Excellent')) { percent = 100; label = labels.excellent; }
+      else if (quality.includes('Fair')) { percent = 65; label = labels.fair; }
+      else if (quality.includes('Poor')) { percent = 30; label = labels.poor; }
+      else if (quality.includes('Vegetation')) { percent = 15; label = labels.overgrown; }
+      conditions.push({ label: labels.surface, percent, text: label });
     }
     
     // Slopes
     const slopes = data?.trailSlopes || '';
     if (slopes) {
       let percent = 50;
-      let label = 'Moderate';
-      if (slopes.includes('No slopes') || slopes.includes('mild')) { percent = 100; label = 'Flat/Mild'; }
-      else if (slopes.includes('Moderate')) { percent = 50; label = 'Moderate'; }
-      else if (slopes.includes('Steep')) { percent = 20; label = 'Steep'; }
-      conditions.push({ label: 'Slope', percent, text: label });
+      let label = labels.moderate;
+      if (slopes.includes('No slopes') || slopes.includes('mild')) { percent = 100; label = labels.flatMild; }
+      else if (slopes.includes('Moderate')) { percent = 50; label = labels.moderate; }
+      else if (slopes.includes('Steep')) { percent = 20; label = labels.steep; }
+      conditions.push({ label: labels.slope, percent, text: label });
     }
     
     // Shade
     const shade = data?.shadeCoverage || '';
     if (shade) {
       let percent = 50;
-      let label = 'Some';
-      if (shade.includes('Plenty')) { percent = 100; label = 'Plenty'; }
-      else if (shade.includes('Intermittent')) { percent = 50; label = 'Some'; }
-      else if (shade.includes('No shade')) { percent = 10; label = 'None'; }
-      conditions.push({ label: 'Shade', percent, text: label });
+      let label = labels.some;
+      if (shade.includes('Plenty')) { percent = 100; label = labels.plenty; }
+      else if (shade.includes('Intermittent')) { percent = 50; label = labels.some; }
+      else if (shade.includes('No shade')) { percent = 10; label = labels.none; }
+      conditions.push({ label: labels.shade, percent, text: label });
     }
     
     if (conditions.length === 0) return '';
     
     return `
         <section class="tg-section">
-            <h2 class="tg-section-title">📊 Trail Conditions</h2>
+            <h2 class="tg-section-title">📊 ${labels.trailConditions}</h2>
             <div class="tg-conditions">
                 ${conditions.map(c => `
                     <div class="tg-condition-row">
@@ -838,9 +883,24 @@ export class TrailGuideGeneratorV2 {
     return 'poor';
   }
 
-  renderFacilitiesSection(data) {
+  renderFacilitiesSection(data, t = {}) {
     console.log('🏛️ Rendering facilities with data:', data);
     const facilities = [];
+    
+    // Labels with translations
+    const labels = {
+      facilities: t.facilities || 'Facilities',
+      parking: t.parking || 'Parking',
+      restrooms: t.restrooms || 'Restrooms',
+      water: t.water || 'Water',
+      benches: t.seating || 'Benches',
+      picnic: 'Picnic',
+      viewpoint: 'Viewpoint',
+      lighting: 'Lighting',
+      spaces: t.available || 'spaces',
+      yes: t.available || 'Yes',
+      none: t.notAvailable || 'None'
+    };
     
     // Helper function to check if value indicates "available"
     const isAvailable = (value) => {
@@ -862,27 +922,27 @@ export class TrailGuideGeneratorV2 {
     console.log('  - disabledParking:', parking, 'isAvailable:', isAvailable(parking));
     if (isAvailable(parking)) {
       const spaces = data?.parkingSpaces || '?';
-      facilities.push({ icon: '🅿️', label: 'Parking', status: `${spaces} spaces`, available: true });
+      facilities.push({ icon: '🅿️', label: labels.parking, status: `${spaces} ${labels.spaces}`, available: true });
     } else {
-      facilities.push({ icon: '🅿️', label: 'Parking', status: 'None', available: false });
+      facilities.push({ icon: '🅿️', label: labels.parking, status: labels.none, available: false });
     }
     
     // Restrooms
     const restrooms = data?.restrooms || '';
     console.log('  - restrooms:', restrooms, 'isNone:', isNone(restrooms));
     if (restrooms && !isNone(restrooms)) {
-      facilities.push({ icon: '🚻', label: 'Restrooms', status: 'Yes', available: true });
+      facilities.push({ icon: '🚻', label: labels.restrooms, status: labels.yes, available: true });
     } else {
-      facilities.push({ icon: '🚻', label: 'Restrooms', status: 'None', available: false });
+      facilities.push({ icon: '🚻', label: labels.restrooms, status: labels.none, available: false });
     }
     
     // Water
     const water = data?.waterFountains || '';
     console.log('  - waterFountains:', water, 'isNone:', isNone(water));
     if (water && !isNone(water)) {
-      facilities.push({ icon: '🚰', label: 'Water', status: 'Yes', available: true });
+      facilities.push({ icon: '🚰', label: labels.water, status: labels.yes, available: true });
     } else {
-      facilities.push({ icon: '🚰', label: 'Water', status: 'None', available: false });
+      facilities.push({ icon: '🚰', label: labels.water, status: labels.none, available: false });
     }
     
     // Seating
@@ -890,37 +950,37 @@ export class TrailGuideGeneratorV2 {
     const seatingArr = Array.isArray(seating) ? seating : [seating];
     console.log('  - seating:', seating, 'arr:', seatingArr);
     if (seatingArr.some(s => s && !isNone(s))) {
-      facilities.push({ icon: '🪑', label: 'Benches', status: 'Yes', available: true });
+      facilities.push({ icon: '🪑', label: labels.benches, status: labels.yes, available: true });
     } else {
-      facilities.push({ icon: '🪑', label: 'Benches', status: 'None', available: false });
+      facilities.push({ icon: '🪑', label: labels.benches, status: labels.none, available: false });
     }
     
     // Picnic
     const picnic = data?.picnicAreas;
     console.log('  - picnicAreas:', picnic, 'isAvailable:', isAvailable(picnic));
     if (isAvailable(picnic)) {
-      facilities.push({ icon: '🧺', label: 'Picnic', status: 'Yes', available: true });
+      facilities.push({ icon: '🧺', label: labels.picnic, status: labels.yes, available: true });
     }
     
     // Viewpoint
     const viewpoint = data?.accessibleViewpoint;
     console.log('  - accessibleViewpoint:', viewpoint, 'isAvailable:', isAvailable(viewpoint));
     if (isAvailable(viewpoint)) {
-      facilities.push({ icon: '🏔️', label: 'Viewpoint', status: 'Yes', available: true });
+      facilities.push({ icon: '🏔️', label: labels.viewpoint, status: labels.yes, available: true });
     }
     
     // Lighting
     const lighting = data?.lighting;
     console.log('  - lighting:', lighting);
     if (lighting && (typeof lighting === 'string' || (Array.isArray(lighting) && lighting.length > 0))) {
-      facilities.push({ icon: '💡', label: 'Lighting', status: 'Yes', available: true });
+      facilities.push({ icon: '💡', label: labels.lighting, status: labels.yes, available: true });
     }
     
     console.log('  - Final facilities count:', facilities.length);
     
     return `
         <section class="tg-section">
-            <h2 class="tg-section-title">🏛️ Facilities</h2>
+            <h2 class="tg-section-title">🏛️ ${labels.facilities}</h2>
             <div class="tg-facilities">
                 ${facilities.map(f => `
                     <div class="tg-facility ${f.available ? 'available' : 'unavailable'}">
