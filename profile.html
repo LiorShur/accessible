@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="src/css/unified-nav.css">
   <link rel="stylesheet" href="src/css/mobile-responsive.css">
   <link rel="stylesheet" href="src/css/error-messages.css">
-  <link rel="stylesheet" href="src/css/rtl.css">
   <link rel="stylesheet" href="src/css/high-contrast.css">
   <link rel="stylesheet" href="src/css/global-nav.css">
   <link rel="manifest" href="manifest.json">
@@ -36,6 +35,73 @@
   <style>
     * {
       box-sizing: border-box;
+    }
+    
+    /* RTL Support - Keep certain elements LTR */
+    .top-nav,
+    nav,
+    .nav-menu,
+    .nav-brand,
+    .nav-auth-indicator,
+    .stats-grid {
+      direction: ltr !important;
+    }
+    
+    /* RTL text alignment for content sections */
+    html[dir="rtl"] .profile-section,
+    html[dir="rtl"] .section-title,
+    html[dir="rtl"] .settings-item-text,
+    html[dir="rtl"] .mobility-preview,
+    html.rtl .profile-section,
+    html.rtl .section-title,
+    html.rtl .settings-item-text,
+    html.rtl .mobility-preview,
+    body[dir="rtl"] .profile-section,
+    body[dir="rtl"] .section-title,
+    body[dir="rtl"] .settings-item-text,
+    body[dir="rtl"] .mobility-preview {
+      text-align: right;
+      direction: rtl;
+    }
+    
+    /* RTL flex direction for settings items */
+    html[dir="rtl"] .settings-item,
+    html.rtl .settings-item,
+    body[dir="rtl"] .settings-item {
+      flex-direction: row-reverse;
+    }
+    
+    html[dir="rtl"] .settings-item-left,
+    html.rtl .settings-item-left,
+    body[dir="rtl"] .settings-item-left {
+      flex-direction: row-reverse;
+    }
+    
+    html[dir="rtl"] .section-header,
+    html.rtl .section-header,
+    body[dir="rtl"] .section-header {
+      flex-direction: row-reverse;
+    }
+    
+    html[dir="rtl"] .settings-item-right,
+    html.rtl .settings-item-right,
+    body[dir="rtl"] .settings-item-right {
+      transform: scaleX(-1);
+    }
+    
+    /* RTL for profile content area */
+    html[dir="rtl"] .profile-content,
+    html.rtl .profile-content,
+    body[dir="rtl"] .profile-content {
+      direction: rtl;
+      text-align: right;
+    }
+    
+    /* RTL for settings list */
+    html[dir="rtl"] .settings-list,
+    html.rtl .settings-list,
+    body[dir="rtl"] .settings-list {
+      direction: rtl;
     }
     
     /* WCAG Accessibility Styles */
@@ -86,50 +152,32 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 60px;
-      background: #000;
+      background: #2c5530;
       color: white;
-      padding: 0 16px;
+      padding: 12px 16px;
       display: flex;
       align-items: center;
+      justify-content: space-between;
       z-index: 9999;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
     
     .nav-brand {
-      display: flex;
-      align-items: center;
-      gap: 8px;
       color: white;
       text-decoration: none;
-      font-weight: 700;
-      font-size: 1.15rem;
+      font-weight: 600;
+      font-size: 1.1rem;
     }
     
     .nav-auth-indicator {
-      display: none;
-    }
-    
-    .menu-toggle {
-      display: none;
-    }
-    
-    .nav-menu {
-      display: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
     }
     
     /* Desktop: show nav-menu, hide hamburger */
     @media (min-width: 769px) {
-      .top-nav {
-        padding-right: 230px; /* Space for top toolbar */
-        justify-content: flex-start !important; /* Override unified-nav.css space-between */
-      }
-      .top-nav::after {
-        display: none !important; /* Remove pseudo-element spacer from unified-nav.css */
-      }
-      .nav-brand {
-        margin-right: 0 !important; /* Override unified-nav.css margin-right: auto */
-      }
       .menu-toggle { display: none !important; }
       .nav-menu {
         display: flex !important;
@@ -137,73 +185,19 @@
         background: none;
         box-shadow: none;
         padding: 0;
-        gap: 4px;
-        align-items: center;
-        flex-shrink: 0;
-        margin-left: auto; /* Push nav-menu to right, next to toolbar */
+        gap: 8px;
       }
-      /* Hide emoji icons on desktop to save space */
-      .nav-menu .nav-icon-emoji {
-        display: none;
-      }
-      .nav-menu .nav-link,
-      .nav-menu #profileNavLink {
-        padding: 6px 10px;
+      .nav-menu .nav-link {
+        padding: 8px 12px;
         border-radius: 6px;
-        color: #fff;
-        text-decoration: none;
-        font-size: 0.8rem;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        line-height: 1;
-        height: 32px;
-        box-sizing: border-box;
-        vertical-align: middle;
-      }
-      .nav-menu .nav-link:hover {
-        background: rgba(255,255,255,0.15);
-      }
-      .nav-menu .nav-link.active {
-        background: #667eea;
-        color: white;
       }
       .nav-menu .nav-auth {
         margin-left: 8px;
-        display: flex;
-        align-items: center;
-      }
-      .nav-menu .nav-auth .btn {
-        padding: 6px 12px;
-        border-radius: 6px;
-        border: none;
-        background: #667eea;
-        color: white;
-        cursor: pointer;
-        font-size: 0.8rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        height: 32px;
-        box-sizing: border-box;
-      }
-      .nav-menu .nav-auth .btn:hover {
-        background: #5a6fd6;
       }
     }
     
-    /* Mobile: hide hamburger (replaced by bottom nav) and keep nav-brand left */
+    /* Mobile: hide hamburger (replaced by bottom nav) */
     @media (max-width: 768px) {
-      .top-nav {
-        justify-content: flex-start !important;
-      }
-      .top-nav::after {
-        display: none !important;
-      }
-      .nav-brand {
-        margin-right: 0 !important;
-      }
       .menu-toggle { display: none !important; }
       .nav-menu { display: none !important; }
     }
@@ -847,7 +841,7 @@
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
   <!-- Navigation -->
-  <nav class="top-nav" role="navigation" aria-label="Main navigation">
+  <nav class="top-nav" role="navigation" aria-label="Main navigation" dir="ltr">
     <a href="index.html" class="nav-brand">♿ Accessible</a>
     <div class="nav-auth-indicator">
       <div class="auth-status" id="navAuthIndicator">
@@ -863,10 +857,10 @@
       </span>
     </button>
     <div class="nav-menu" id="navMenu" role="menu">
-      <a href="index.html" class="nav-link" role="menuitem"><span class="nav-icon-emoji" aria-hidden="true">🏠 </span>Home</a>
-      <a href="tracker.html" class="nav-link" role="menuitem"><span class="nav-icon-emoji" aria-hidden="true">🗺️ </span>Track</a>
-      <a href="reports.html" class="nav-link" role="menuitem"><span class="nav-icon-emoji" aria-hidden="true">📋 </span>Reports</a>
-      <a href="profile.html" class="nav-link active" role="menuitem"><span class="nav-icon-emoji" aria-hidden="true">👤 </span>Profile</a>
+      <a href="index.html" class="nav-link" role="menuitem">🏠 Home</a>
+      <a href="tracker.html" class="nav-link" role="menuitem">🗺️ Track</a>
+      <a href="reports.html" class="nav-link" role="menuitem">📋 Reports</a>
+      <a href="profile.html" class="nav-link active" role="menuitem">👤 Profile</a>
       <div class="nav-auth">
         <button id="navAuthBtn" class="btn" aria-label="Sign in to your account">Sign In</button>
       </div>
@@ -886,7 +880,7 @@
   <!-- Loading Overlay -->
   <div id="loadingOverlay" class="loading-overlay" role="alert" aria-live="polite">
     <div class="loading-spinner" aria-hidden="true"></div>
-    <p data-i18n="profile.loadingProfile">Loading profile...</p>
+    <p>Loading profile...</p>
   </div>
 
   <!-- Main Content (hidden until loaded) -->
@@ -912,17 +906,17 @@
         <div class="stat-card">
           <div class="stat-icon">📚</div>
           <div class="stat-value" id="statGuides"><span class="stat-loading"></span></div>
-          <div class="stat-label">Trail Guides</div>
+          <div class="stat-label" data-i18n="profile.stats.trailGuides">Trail Guides</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon">📏</div>
           <div class="stat-value" id="statDistance"><span class="stat-loading"></span></div>
-          <div class="stat-label">km Tracked</div>
+          <div class="stat-label" data-i18n="profile.stats.kmTracked">km Tracked</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon">⚠️</div>
           <div class="stat-value" id="statReports"><span class="stat-loading"></span></div>
-          <div class="stat-label">Reports</div>
+          <div class="stat-label" data-i18n="profile.stats.reports">Reports</div>
         </div>
       </section>
       
@@ -930,7 +924,7 @@
       <section class="profile-section">
         <div class="section-header">
           <h2 class="section-title">
-            <span class="icon">👤</span> <span data-i18n="nav.profile">Account</span>
+            <span class="icon">👤</span> <span data-i18n="profile.account">Account</span>
           </h2>
         </div>
         <ul class="settings-list">
@@ -963,7 +957,7 @@
           <h2 class="section-title">
             <span class="icon">♿</span> <span data-i18n="profile.mobilityProfile">Mobility Profile</span>
           </h2>
-          <a href="#" class="section-action" onclick="openMobilityModal(); return false;" data-i18n="common.edit">Edit</a>
+          <a href="#" class="section-action" onclick="openMobilityModal(); return false;" data-i18n="profile.edit">Edit</a>
         </div>
         <div class="section-content">
           <div class="mobility-preview" id="mobilityPreview">
@@ -976,7 +970,7 @@
       <section class="profile-section">
         <div class="section-header">
           <h2 class="section-title">
-            <span class="icon">🔒</span> <span data-i18n="profile.dataPrivacy">Data & Privacy</span>
+            <span class="icon">🔒</span> Data & Privacy
           </h2>
         </div>
         <ul class="settings-list">
@@ -984,8 +978,8 @@
             <div class="settings-item-left">
               <div class="settings-item-icon purple">📥</div>
               <div class="settings-item-text">
-                <h3 data-i18n="profile.exportMyData">Export My Data</h3>
-                <p data-i18n="profile.exportDataDesc">Download all your data</p>
+                <h3>Export My Data</h3>
+                <p>Download all your data</p>
               </div>
             </div>
             <div class="settings-item-right">›</div>
@@ -994,8 +988,8 @@
             <div class="settings-item-left">
               <div class="settings-item-icon blue">📋</div>
               <div class="settings-item-text">
-                <h3 data-i18n="profile.privacyPolicy">Privacy Policy</h3>
-                <p data-i18n="profile.privacyPolicyDesc">How we handle your data</p>
+                <h3>Privacy Policy</h3>
+                <p>How we handle your data</p>
               </div>
             </div>
             <div class="settings-item-right">›</div>
@@ -1004,7 +998,7 @@
             <div class="settings-item-left">
               <div class="settings-item-icon orange">📜</div>
               <div class="settings-item-text">
-                <h3 data-i18n="footer.terms">Terms of Service</h3>
+                <h3>Terms of Service</h3>
                 <p>Usage terms and conditions</p>
               </div>
             </div>
@@ -1025,8 +1019,8 @@
             <div class="settings-item-left">
               <div class="settings-item-icon orange">🚪</div>
               <div class="settings-item-text">
-                <h3 data-i18n="nav.signOut">Sign Out</h3>
-                <p data-i18n="profile.signOutDesc">Sign out of your account</p>
+                <h3>Sign Out</h3>
+                <p>Sign out of your account</p>
               </div>
             </div>
             <div class="settings-item-right">›</div>
@@ -1035,8 +1029,8 @@
             <div class="settings-item-left">
               <div class="settings-item-icon red">🗑️</div>
               <div class="settings-item-text">
-                <h3 data-i18n="profile.deleteAccount">Delete Account</h3>
-                <p data-i18n="profile.deleteAccountDesc">Permanently delete your account and data</p>
+                <h3>Delete Account</h3>
+                <p>Permanently delete your account and data</p>
               </div>
             </div>
             <div class="settings-item-right">›</div>
@@ -1047,9 +1041,9 @@
       <!-- Footer -->
       <footer class="profile-footer">
         <div class="footer-links">
-          <a href="index.html" data-i18n="nav.home">Home</a>
-          <a href="beta-guide.html" data-i18n="profile.help">Help</a>
-          <a href="reports.html" data-i18n="nav.reports">Reports</a>
+          <a href="index.html">Home</a>
+          <a href="beta-guide.html">Help</a>
+          <a href="reports.html">Reports</a>
         </div>
         <p class="app-version">Accessible v1.0.0-beta</p>
       </footer>
@@ -1059,8 +1053,8 @@
   <!-- Sign In Prompt (shown when not logged in) -->
   <div id="signinPrompt" class="signin-prompt" style="display: none;">
     <div class="icon">🔐</div>
-    <h2 data-i18n="profile.signInRequired">Sign In Required</h2>
-    <p data-i18n="profile.signInPrompt">Please sign in to view your profile and settings.</p>
+    <h2>Sign In Required</h2>
+    <p>Please sign in to view your profile and settings.</p>
     <button class="btn btn-primary" onclick="window.location.href='index.html'">
       Go to Home Page
     </button>
@@ -1225,6 +1219,9 @@
     import { onAuthStateChanged, signOut, updateProfile, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js';
     import { collection, query, where, getDocs, doc, getDoc, setDoc, deleteDoc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js';
     
+    // Import i18n
+    import { i18n, t } from './src/i18n/i18n.js';
+    
     let currentUser = null;
     let userStats = { guides: 0, distance: 0, reports: 0 };
     let mobilityProfile = {};
@@ -1232,39 +1229,25 @@
     console.log('👤 Profile page: Firebase auth imported from shared setup');
     console.log('👤 Profile page: Current auth state:', auth.currentUser?.email || 'none');
     
+    // Initialize i18n
+    async function initI18n() {
+      try {
+        await i18n.init();
+        i18n.translatePage();
+        console.log('🌐 Profile page: i18n initialized');
+        
+        // Enforce LTR on specific elements
+        i18n.enforceLTRLayout();
+      } catch (e) {
+        console.warn('🌐 Profile page: i18n init failed:', e);
+      }
+    }
+    initI18n();
+    
     // Initialize
     onAuthStateChanged(auth, async (user) => {
       console.log('👤 Profile page: Auth state changed:', user ? user.email : 'signed out');
       document.getElementById('loadingOverlay').style.display = 'none';
-      
-      // Update global nav profile button
-      const updateGlobalNavProfile = () => {
-        const profileItem = document.getElementById('globalNavProfile');
-        const profileLabel = document.getElementById('profileLabel');
-        if (profileItem && profileLabel) {
-          if (user) {
-            const displayName = user.email?.split('@')[0] || user.displayName || 'User';
-            const truncatedName = displayName && displayName.length > 10 ? displayName.substring(0, 10) + '…' : displayName;
-            profileItem.classList.add('signed-in');
-            if (truncatedName) profileLabel.textContent = truncatedName;
-            // Save to localStorage for persistence across language toggles
-            if (displayName && displayName !== 'User') {
-              localStorage.setItem('accessNature_userName', displayName);
-            }
-          } else {
-            profileItem.classList.remove('signed-in');
-            profileLabel.textContent = window.t?.('auth.signIn') || 'Sign In';
-            localStorage.removeItem('accessNature_userName');
-          }
-          return true;
-        }
-        return false;
-      };
-      
-      // Update global nav immediately and with retries
-      if (!updateGlobalNavProfile()) {
-        [100, 300, 500, 1000].forEach(delay => setTimeout(updateGlobalNavProfile, delay));
-      }
       
       if (user) {
         currentUser = user;
@@ -1747,63 +1730,21 @@
           if (user) {
             indicator?.classList.add('signed-in');
             if (text) text.textContent = user.displayName || user.email?.split('@')[0] || 'User';
-            if (btn) {
-              const displayName = user.email?.split('@')[0] || user.displayName || 'User';
-              const shortName = displayName.length > 8 ? displayName.substring(0, 8) + '…' : displayName;
-              const exitDoorSvg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`;
-              btn.innerHTML = `${exitDoorSvg} ${shortName}`;
-              btn.title = window.t?.('auth.signOut') || 'Sign Out';
-              btn.setAttribute('aria-label', `${window.t?.('auth.signOut') || 'Sign Out'} (${displayName})`);
-              btn.onclick = () => {
-                if (confirm(window.t?.('auth.signOutConfirm') || 'Sign out of Access Nature?')) {
-                  signOut(auth).then(() => window.location.href = 'index.html');
-                }
-              };
+            if (btn) { 
+              btn.textContent = 'Sign Out'; 
+              btn.onclick = () => signOut(auth).then(() => window.location.href = 'index.html');
             }
           } else {
             indicator?.classList.remove('signed-in');
             if (text) text.textContent = 'Guest';
-            if (btn) {
-              btn.innerHTML = window.t?.('auth.signIn') || 'Sign In';
-              btn.title = '';
-              btn.setAttribute('aria-label', window.t?.('auth.signIn') || 'Sign In');
+            if (btn) { 
+              btn.textContent = 'Sign In'; 
               btn.onclick = () => window.location.href = 'index.html';
             }
           }
         });
       });
     });
-  </script>
-  
-  <!-- i18n (Internationalization) -->
-  <script type="module">
-    import { i18n, t } from './src/i18n/i18n.js';
-    
-    // Initialize i18n
-    try {
-      await i18n.init();
-      i18n.translatePage();
-      
-      // Listen for language changes
-      i18n.onLanguageChange((newLang) => {
-        i18n.translatePage();
-      });
-      
-      // Make available globally
-      window.i18n = i18n;
-      window.t = t;
-    } catch (e) {
-      console.warn('🌐 i18n initialization failed:', e);
-      // Apply direction from saved preference
-      const savedLang = localStorage.getItem('accessNature_language') || 'en';
-      if (savedLang === 'he') {
-        document.documentElement.setAttribute('dir', 'rtl');
-        document.documentElement.setAttribute('lang', 'he');
-        document.body.setAttribute('dir', 'rtl');
-        document.documentElement.classList.add('rtl');
-        document.body.classList.add('rtl');
-      }
-    }
   </script>
   
   <!-- Global Bottom Navigation -->
@@ -1852,22 +1793,6 @@
   <script type="module">
     import { betaFeedback } from './src/utils/betaFeedback.js';
     betaFeedback.initialize();
-  </script>
-  
-  <!-- Top Toolbar & Announcements -->
-  <script type="module">
-    import { topToolbarUI } from './src/ui/topToolbarUI.js';
-    import { announcementsUI } from './src/ui/announcementsUI.js';
-    
-    // Initialize announcements when user is signed in
-    const { getAuth: getAuthInstance, onAuthStateChanged: onAuthChange } = await import('https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js');
-    const authInstance = getAuthInstance();
-    
-    onAuthChange(authInstance, (user) => {
-      if (user) {
-        announcementsUI?.initialize();
-      }
-    });
   </script>
 </body>
 </html>

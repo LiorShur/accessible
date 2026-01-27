@@ -64,9 +64,46 @@
 }
 
 /* RTL Override: These elements should ALWAYS stay LTR */
+/* Use high specificity to override any RTL rules */
+html[dir="rtl"] .top-nav,
+html[dir="rtl"] #topControlBar,
+html[dir="rtl"] #secondRowControls,
+html[dir="rtl"] #rightControls,
+html[dir="rtl"] #leftControls,
+html[dir="rtl"] nav,
+html[dir="rtl"] .nav-menu,
+html[dir="rtl"] .nav-brand,
+html[dir="rtl"] .nav-auth-indicator,
+html[dir="rtl"] .tracker-controls,
+html[dir="rtl"] .control-row,
+html[dir="rtl"] .elevation-display,
+html[dir="rtl"] .heading-display,
+html[dir="rtl"] #accessibilitySurveyBtn,
+html[dir="rtl"] .voice-control-fab,
+html[dir="rtl"] .voice-overlay,
+html[dir="rtl"] #accessibility-reminder,
+html[dir="rtl"] #survey-prompt-overlay,
+html.rtl .top-nav,
+html.rtl #topControlBar,
+html.rtl #secondRowControls,
+html.rtl #rightControls,
+html.rtl #leftControls,
+html.rtl nav,
+html.rtl .nav-menu,
+html.rtl .nav-brand,
+html.rtl .nav-auth-indicator,
+html.rtl .tracker-controls,
+html.rtl .control-row,
+html.rtl .elevation-display,
+html.rtl .heading-display,
+html.rtl #accessibilitySurveyBtn,
+html.rtl .voice-control-fab,
+html.rtl .voice-overlay,
+html.rtl #accessibility-reminder,
+html.rtl #survey-prompt-overlay,
 .top-nav,
 #topControlBar,
-#secondaryRow,
+#secondRowControls,
 #rightControls,
 #leftControls,
 nav,
@@ -77,6 +114,8 @@ nav,
 .control-row,
 .elevation-display,
 .heading-display,
+#elevationDisplay,
+#headingDisplay,
 #accessibilitySurveyBtn,
 .voice-control-fab,
 .voice-overlay,
@@ -84,6 +123,64 @@ nav,
 #survey-prompt-overlay {
   direction: ltr !important;
   text-align: left !important;
+}
+
+/* Prevent flex-direction from reversing in RTL */
+html[dir="rtl"] #topControlBar,
+html[dir="rtl"] #secondRowControls,
+html[dir="rtl"] .top-nav,
+html.rtl #topControlBar,
+html.rtl #secondRowControls,
+html.rtl .top-nav,
+#topControlBar,
+#secondRowControls,
+.top-nav {
+  flex-direction: row !important;
+}
+
+/* Prevent right controls from moving to left in RTL */
+html[dir="rtl"] #rightControls,
+html.rtl #rightControls {
+  right: 12px !important;
+  left: auto !important;
+  flex-direction: column !important;
+}
+
+/* Prevent left controls from moving to right in RTL */
+html[dir="rtl"] #leftControls,
+html.rtl #leftControls {
+  left: 12px !important;
+  right: auto !important;
+  flex-direction: column !important;
+}
+
+/* Ensure children also stay LTR */
+html[dir="rtl"] .top-nav *,
+html[dir="rtl"] #topControlBar *,
+html[dir="rtl"] #secondRowControls *,
+html.rtl .top-nav *,
+html.rtl #topControlBar *,
+html.rtl #secondRowControls *,
+.top-nav *,
+#topControlBar *,
+#secondRowControls * {
+  direction: ltr !important;
+}
+
+/* Keep right controls on the RIGHT side even in RTL */
+html[dir="rtl"] #rightControls,
+html.rtl #rightControls,
+#rightControls {
+  right: 12px !important;
+  left: auto !important;
+}
+
+/* Keep left controls on the LEFT side even in RTL */
+html[dir="rtl"] #leftControls,
+html.rtl #leftControls,
+#leftControls {
+  left: 12px !important;
+  right: auto !important;
 }
 
 /* Keep input fields LTR for coordinates/numbers */
@@ -539,9 +636,9 @@ textarea:focus-visible,
   <!-- Skip to main content link for keyboard users -->
   <a href="#map-container" class="skip-link">Skip to map</a>
   
-  <nav class="top-nav" role="navigation" aria-label="Main navigation">
-  <a href="index.html" class="nav-brand">♿ Accessible</a>
-  <div class="nav-auth-indicator">
+  <nav class="top-nav" role="navigation" aria-label="Main navigation" dir="ltr" style="direction: ltr; flex-direction: row;">
+  <a href="index.html" class="nav-brand" dir="ltr" style="direction: ltr;">♿ Accessible</a>
+  <div class="nav-auth-indicator" dir="ltr" style="direction: ltr;">
     <div class="auth-status" id="navAuthIndicator">
       <span>👤</span>
       <span id="navAuthStatusText">Guest</span>
@@ -554,7 +651,7 @@ textarea:focus-visible,
       <span></span>
     </span>
   </button>
-  <div class="nav-menu" id="navMenu">
+  <div class="nav-menu" id="navMenu" dir="ltr" style="direction: ltr;">
     <a href="index.html" class="nav-link">🏠 Home</a>
     <a href="tracker.html" class="nav-link active">🗺️ Track</a>
     <a href="reports.html" class="nav-link">📋 Reports</a>
@@ -761,12 +858,14 @@ textarea:focus-visible,
   <!-- ============================================
        TOP CONTROL BAR: Start/Pause/Stop + Time + Distance
        ============================================ -->
-  <div id="topControlBar" style="
+  <div id="topControlBar" dir="ltr" style="
     position: fixed;
     top: calc(var(--nav-height, 56px) + 8px);
     left: 50%;
     transform: translateX(-50%);
     display: flex;
+    flex-direction: row;
+    direction: ltr;
     align-items: center;
     gap: 8px;
     background: rgba(26, 26, 26, 0.95);
@@ -828,12 +927,14 @@ textarea:focus-visible,
   <!-- ============================================
        SECOND ROW: Heading + Compass + Accessibility Survey
        ============================================ -->
-  <div id="secondRowControls" style="
+  <div id="secondRowControls" dir="ltr" style="
     position: fixed;
     top: calc(var(--nav-height, 56px) + 70px);
     left: 50%;
     transform: translateX(-50%);
     display: flex;
+    flex-direction: row;
+    direction: ltr;
     align-items: center;
     gap: 8px;
     z-index: 750;
@@ -1015,7 +1116,7 @@ textarea:focus-visible,
   <!-- ============================================
        LEFT CONTROLS: Zoom, Center, Rotation
        ============================================ -->
-  <div id="leftControls" style="
+  <div id="leftControls" dir="ltr" style="
     position: fixed;
     top: 50%;
     left: 12px;
@@ -1210,7 +1311,7 @@ textarea:focus-visible,
   <!-- ============================================
        RIGHT CONTROLS: Media + Safety + More
        ============================================ -->
-  <div id="rightControls" style="
+  <div id="rightControls" dir="ltr" style="
     position: fixed;
     top: 50%;
     right: 12px;
@@ -1470,6 +1571,23 @@ textarea:focus-visible,
         if (navigator.vibrate) navigator.vibrate(10);
       });
     })();
+  </script>
+
+  <!-- i18n Setup -->
+  <script type="module">
+    import { i18n } from './src/i18n/i18n.js';
+    async function initI18n() {
+      try {
+        await i18n.init();
+        i18n.translatePage();
+        // Enforce LTR on nav and controls
+        i18n.enforceLTRLayout();
+        console.log('🌐 Tracker page: i18n initialized');
+      } catch (e) {
+        console.warn('🌐 Tracker page: i18n init failed:', e);
+      }
+    }
+    initI18n();
   </script>
 
   <!-- App JavaScript -->
